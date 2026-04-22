@@ -10,14 +10,16 @@ import { PeopleScreen } from './src/presentation/screens/PeopleScreen';
 import { TransactionsScreen } from './src/presentation/screens/TransactionsScreen';
 import { colors } from './src/presentation/theme/colors';
 
-type TabKey = 'dashboard' | 'transactions' | 'people' | 'insights';
+type TabKey = 'dashboard' | 'people' | 'transaction_new' | 'transactions_history' | 'insights';
 
 const tabs: { key: TabKey; label: string; icon: string }[] = [
-  { key: 'dashboard', label: 'Home', icon: 'grid' },
-  { key: 'transactions', label: 'History', icon: 'list' },
+  { key: 'dashboard', label: 'Home', icon: 'home' },
   { key: 'people', label: 'Contacts', icon: 'users' },
-  { key: 'insights', label: 'Trends', icon: 'pie-chart' },
+  { key: 'transaction_new', label: 'New', icon: 'plus-circle' },
+  { key: 'transactions_history', label: 'History', icon: 'clock' },
+  { key: 'insights', label: 'Trends', icon: 'trending-up' },
 ];
+
 
 export default function App() {
   const ledger = useLedger();
@@ -67,9 +69,10 @@ export default function App() {
               <View style={[styles.tabIconContainer, isActive ? styles.tabIconActive : null]}>
                 <Feather 
                   name={tab.icon as any} 
-                  size={20} 
-                  color={isActive ? colors.primary : colors.textMuted} 
+                  size={22} 
+                  color={isActive ? colors.background : colors.textMuted} 
                 />
+
               </View>
               <Text style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>
                 {tab.label}
@@ -84,13 +87,21 @@ export default function App() {
 
 const renderContent = (tab: TabKey, ledger: ReturnType<typeof useLedger>) => {
   switch (tab) {
-    case 'dashboard': return <DashboardScreen ledger={ledger} />;
-    case 'transactions': return <TransactionsScreen ledger={ledger} />;
-    case 'people': return <PeopleScreen ledger={ledger} />;
-    case 'insights': return <InsightsScreen ledger={ledger} />;
-    default: return null;
+    case 'dashboard':
+      return <DashboardScreen ledger={ledger} />;
+    case 'people':
+      return <PeopleScreen ledger={ledger} />;
+    case 'transaction_new':
+      return <TransactionsScreen key="new" ledger={ledger} initialMode="add" />;
+    case 'transactions_history':
+      return <TransactionsScreen key="history" ledger={ledger} initialMode="history" />;
+    case 'insights':
+      return <InsightsScreen ledger={ledger} />;
+    default:
+      return null;
   }
 };
+
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -136,37 +147,46 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: colors.surfaceAlt,
-    paddingTop: 12,
-    paddingBottom: 24,
-    paddingHorizontal: 8,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    gap: 0,
+    backgroundColor: colors.surface,
+    position: 'absolute',
+    bottom: 24,
+    left: 20,
+    right: 20,
+    height: 72,
+    borderRadius: 36,
+    paddingHorizontal: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
   },
   tabItem: {
     flex: 1,
     alignItems: 'center',
-    gap: 5,
+    justifyContent: 'center',
+    height: '100%',
   },
   tabIconContainer: {
     width: 44,
-    height: 32,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
+    borderRadius: 22,
   },
   tabIconActive: {
-    backgroundColor: colors.primary + '15',
+    backgroundColor: colors.primary,
   },
   tabLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: colors.textMuted,
+    display: 'none', // Hide labels for a cleaner minimal look, icon-only focus
   },
   tabLabelActive: {
     color: colors.primary,
   },
+
   metaText: {
     color: colors.textSecondary,
     fontSize: 14,

@@ -1,9 +1,8 @@
-import { Dimensions, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
+import { Feather } from '@expo/vector-icons';
 
 import { LedgerViewModel } from '../../application/hooks/useLedger';
-import { SectionCard } from '../components/SectionCard';
-import { StatCard } from '../components/StatCard';
 import { colors } from '../theme/colors';
 
 type DashboardScreenProps = {
@@ -18,84 +17,126 @@ export const DashboardScreen = ({ ledger }: DashboardScreenProps) => {
   const { totalLent, totalBorrowed, netBalance, historicalBalance } = ledger.dashboard;
 
   const chartData = {
-    labels: historicalBalance.slice(-6).map(b => b.date.split('-')[2]), // Last 6 days
+    labels: historicalBalance.slice(-6).map(b => b.date.split('-')[2]),
     datasets: [{
       data: historicalBalance.length > 0 ? historicalBalance.slice(-6).map(b => b.balance) : [0],
       color: (opacity = 1) => colors.primary,
-      strokeWidth: 3
+      strokeWidth: 4
     }]
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.balanceCard}>
-        <Text style={styles.balanceLabel}>Net Balance</Text>
-        <Text style={[styles.balanceValue, { color: netBalance >= 0 ? colors.positive : colors.negative }]}>
-          {netBalance >= 0 ? '+' : '-'}{formatCurrency(netBalance)}
-        </Text>
-        <View style={[styles.statusBadge, { backgroundColor: netBalance >= 0 ? colors.positive + '20' : colors.negative + '20' }]}>
-          <Text style={[styles.statusText, { color: netBalance >= 0 ? colors.positive : colors.negative }]}>
-            {netBalance >= 0 ? 'Surplus' : 'Deficit'}
+    <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      {/* Hero Balance Section */}
+      <View style={styles.hero}>
+        <View style={styles.heroContent}>
+          <Text style={styles.heroLabel}>Your Net Worth</Text>
+          <Text style={[styles.heroValue, { color: netBalance >= 0 ? colors.positive : colors.negative }]}>
+            {netBalance >= 0 ? '+' : '-'}{formatCurrency(netBalance)}
           </Text>
+          <View style={[styles.heroBadge, { backgroundColor: netBalance >= 0 ? colors.positive + '30' : colors.negative + '30' }]}>
+            <Feather 
+              name={netBalance >= 0 ? "trending-up" : "trending-down"} 
+              size={12} 
+              color={netBalance >= 0 ? colors.positive : colors.negative} 
+            />
+            <Text style={[styles.heroBadgeText, { color: netBalance >= 0 ? colors.positive : colors.negative }]}>
+              {netBalance >= 0 ? 'Surplus' : 'Deficit'}
+            </Text>
+          </View>
         </View>
       </View>
 
-      <View style={styles.grid}>
-        <StatCard 
-          label="Total Lent" 
-          value={formatCurrency(totalLent)} 
-          valueColor={colors.positive} 
-          icon="arrow-up-right"
-        />
-        <StatCard
-          label="Borrowed"
-          value={formatCurrency(totalBorrowed)}
-          valueColor={colors.negative}
-          icon="arrow-down-left"
-        />
+      {/* Quick Stats Grid */}
+      <View style={styles.statsRow}>
+        <View style={[styles.statBox, { backgroundColor: colors.positive + '10', borderColor: colors.positive + '20' }]}>
+          <Feather name="arrow-up-right" size={20} color={colors.positive} />
+          <View>
+            <Text style={styles.statLabel}>Lent</Text>
+            <Text style={[styles.statValue, { color: colors.positive }]}>{formatCurrency(totalLent)}</Text>
+          </View>
+        </View>
+        <View style={[styles.statBox, { backgroundColor: colors.negative + '10', borderColor: colors.negative + '20' }]}>
+          <Feather name="arrow-down-left" size={20} color={colors.negative} />
+          <View>
+            <Text style={styles.statLabel}>Borrowed</Text>
+            <Text style={[styles.statValue, { color: colors.negative }]}>{formatCurrency(totalBorrowed)}</Text>
+          </View>
+        </View>
       </View>
 
+      {/* Interactive Quick Actions */}
+      <View style={styles.section}>
+        <Text style={styles.sectionHeader}>Quick Actions</Text>
+        <View style={styles.actionsGrid}>
+          {[
+            { icon: 'plus', label: 'Lend', color: colors.primary },
+            { icon: 'minus', label: 'Borrow', color: colors.accent },
+            { icon: 'users', label: 'Split', color: colors.catShop },
+            { icon: 'repeat', label: 'Settle', color: colors.positive },
+          ].map((action, i) => (
+            <Pressable key={i} style={styles.actionItem}>
+              <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
+                <Feather name={action.icon as any} size={22} color={action.color} />
+              </View>
+              <Text style={styles.actionLabel}>{action.label}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+
+      {/* Immersive Chart Section */}
       {historicalBalance.length > 1 && (
-        <SectionCard title="Balance Trend" subtitle="Your financial activity over time">
+        <View style={styles.chartSection}>
+          <Text style={styles.sectionHeader}>Activity Trend</Text>
           <LineChart
             data={chartData}
-            width={screenWidth - 80}
-            height={180}
+            width={screenWidth - 40}
+            height={200}
             chartConfig={{
-              backgroundColor: colors.surface,
-              backgroundGradientFrom: colors.surface,
-              backgroundGradientTo: colors.surface,
+              backgroundColor: colors.background,
+              backgroundGradientFrom: colors.background,
+              backgroundGradientTo: colors.background,
               decimalPlaces: 0,
               color: (opacity = 1) => colors.primary,
-              labelColor: (opacity = 1) => colors.textSecondary,
-              style: { borderRadius: 16 },
+              labelColor: (opacity = 1) => colors.textMuted,
+              strokeWidth: 2,
               propsForDots: {
-                r: "4",
+                r: "5",
                 strokeWidth: "2",
-                stroke: colors.primary
+                stroke: colors.background
+              },
+              propsForBackgroundLines: {
+                stroke: colors.border,
+                strokeDasharray: '4',
               }
             }}
             bezier
+            withVerticalLines={false}
+            withHorizontalLines={true}
             style={styles.chart}
           />
-        </SectionCard>
+        </View>
       )}
 
-      <View style={styles.infoSection}>
-        <Text style={styles.sectionTitle}>Overview</Text>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Active People</Text>
-          <Text style={styles.infoValue}>{ledger.personSummaries.filter(p => p.activeTransactionCount > 0).length}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Outstanding Loans</Text>
-          <Text style={styles.infoValue}>{ledger.data.transactions.filter(t => t.status === 'active').length}</Text>
+      {/* Fun Glance Section */}
+      <View style={[styles.infoSection, { backgroundColor: colors.surface }]}>
+        <Text style={styles.sectionHeader}>On your radar</Text>
+        <View style={styles.radarRow}>
+          <View style={styles.radarItem}>
+            <Text style={styles.radarValue}>{ledger.personSummaries.filter(p => p.activeTransactionCount > 0).length}</Text>
+            <Text style={styles.radarLabel}>Active Contacts</Text>
+          </View>
+          <View style={styles.verticalDivider} />
+          <View style={styles.radarItem}>
+            <Text style={styles.radarValue}>{ledger.data.transactions.filter(t => t.status === 'active').length}</Text>
+            <Text style={styles.radarLabel}>Unsettled</Text>
+          </View>
         </View>
       </View>
     </ScrollView>
   );
 };
-
 
 const styles = StyleSheet.create({
   container: {
@@ -103,88 +144,146 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-    gap: 24,
-    paddingTop: 10,
+    paddingBottom: 120,
   },
-  balanceCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 32,
-    padding: 32,
+
+  hero: {
+    paddingTop: 20,
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  heroContent: {
     alignItems: 'center',
+    paddingVertical: 32,
+    backgroundColor: colors.surface,
+    borderRadius: 40,
     borderWidth: 1,
     borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
   },
-  balanceLabel: {
+  heroLabel: {
     color: colors.textSecondary,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 2,
+    letterSpacing: 2.5,
     marginBottom: 8,
   },
-  balanceValue: {
-    fontSize: 48,
+  heroValue: {
+    fontSize: 54,
     fontWeight: '900',
-    letterSpacing: -1.5,
+    letterSpacing: -2,
   },
-  statusBadge: {
+  heroBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginTop: 16,
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
+    gap: 6,
   },
-  statusText: {
+  heroBadgeText: {
     fontSize: 12,
     fontWeight: '900',
     textTransform: 'uppercase',
-    letterSpacing: 1,
   },
-  grid: {
+  statsRow: {
     flexDirection: 'row',
-    gap: 16,
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 32,
   },
-  chart: {
-    marginVertical: 8,
-    borderRadius: 16,
-    marginLeft: -10,
-  },
-  infoSection: {
-    backgroundColor: colors.surface,
+  statBox: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
     borderRadius: 28,
-    padding: 24,
     borderWidth: 1,
-    borderColor: colors.border,
-    gap: 16,
+    gap: 12,
   },
-  sectionTitle: {
-    color: colors.textPrimary,
-    fontSize: 17,
+  statLabel: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+  },
+  statValue: {
+    fontSize: 18,
     fontWeight: '900',
-    marginBottom: 4,
   },
-  infoRow: {
+  section: {
+    paddingHorizontal: 20,
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 20,
+    paddingHorizontal: 4,
+  },
+  actionsGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 4,
   },
-  infoLabel: {
+  actionItem: {
+    alignItems: 'center',
+    gap: 10,
+  },
+  actionIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionLabel: {
     color: colors.textSecondary,
-    fontSize: 15,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  chartSection: {
+    paddingHorizontal: 20,
+    marginBottom: 32,
+  },
+  chart: {
+    marginLeft: -20,
+    marginTop: 10,
+  },
+  infoSection: {
+    marginHorizontal: 20,
+    padding: 28,
+    borderRadius: 36,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  radarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  radarItem: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 4,
+  },
+  radarValue: {
+    color: colors.textPrimary,
+    fontSize: 24,
+    fontWeight: '900',
+  },
+  radarLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
     fontWeight: '600',
   },
-  infoValue: {
-    color: colors.textPrimary,
-    fontSize: 16,
-    fontWeight: '800',
+  verticalDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: colors.border,
   },
 });
+
 
 

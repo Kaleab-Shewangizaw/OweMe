@@ -117,8 +117,9 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 24,
-    paddingBottom: 40,
+    paddingBottom: 120,
   },
+
   list: {
     gap: 4,
   },

@@ -11,14 +11,16 @@ import { colors } from '../theme/colors';
 
 type TransactionsScreenProps = {
   ledger: LedgerViewModel;
+  initialMode?: ViewMode;
 };
 
 type ViewMode = 'history' | 'add';
 type SortField = 'date' | 'amount' | 'person';
 type SortOrder = 'asc' | 'desc';
 
-export const TransactionsScreen = ({ ledger }: TransactionsScreenProps) => {
-  const [mode, setMode] = useState<ViewMode>('history');
+export const TransactionsScreen = ({ ledger, initialMode = 'history' }: TransactionsScreenProps) => {
+  const [mode, setMode] = useState<ViewMode>(initialMode);
+
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('date');
@@ -260,9 +262,10 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 120,
     paddingTop: 20,
   },
+
   list: {
     gap: 8,
   },
