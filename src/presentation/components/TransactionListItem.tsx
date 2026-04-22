@@ -1,7 +1,9 @@
+import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Person, Transaction } from '../../domain/models/entities';
 import { colors } from '../theme/colors';
+import { CategoryIcon } from './CategoryIcon';
 
 type TransactionListItemProps = {
   transaction: Transaction;
@@ -27,38 +29,53 @@ export const TransactionListItem = ({
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.name}>{person?.name ?? 'Unknown Person'}</Text>
-        <Text style={[styles.amount, { color: isLent ? colors.positive : colors.negative }]}>
-          {isLent ? '+' : '-'}{formatCurrency(transaction.amount)}
-        </Text>
+      <View style={styles.topRow}>
+        <CategoryIcon category={transaction.category} size={16} />
+        <View style={styles.mainInfo}>
+          <Text style={styles.name}>{person?.name ?? 'Unknown'}</Text>
+          <Text style={styles.date}>{transaction.date}</Text>
+        </View>
+        <View style={styles.amountInfo}>
+          <Text style={[styles.amount, { color: isLent ? colors.positive : colors.negative }]}>
+            {isLent ? '+' : '-'}{formatCurrency(transaction.amount)}
+          </Text>
+          <Text style={[styles.status, active ? styles.activeStatus : styles.settledStatus]}>
+            {transaction.status}
+          </Text>
+        </View>
       </View>
 
-      <Text style={styles.meta}>Date: {transaction.date}</Text>
-      {transaction.dueDate ? <Text style={styles.meta}>Due: {transaction.dueDate}</Text> : null}
-      {transaction.note ? <Text style={styles.note}>{transaction.note}</Text> : null}
+      {transaction.note ? (
+        <View style={styles.noteContainer}>
+          <Text style={styles.note} numberOfLines={2}>
+            {transaction.note}
+          </Text>
+        </View>
+      ) : null}
 
-      <View style={styles.statusRow}>
-        <Text style={[styles.badge, active ? styles.activeBadge : styles.settledBadge]}>
-          {transaction.status.toUpperCase()}
-        </Text>
-      </View>
+      {transaction.dueDate && active ? (
+        <View style={styles.dueRow}>
+          <Feather name="calendar" size={12} color={colors.warning} />
+          <Text style={styles.dueText}>Due {transaction.dueDate}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.actions}>
-        {showEditAction ? (
-          <Pressable style={styles.actionButton} onPress={() => onEdit(transaction)}>
-            <Text style={styles.actionText}>Edit</Text>
-          </Pressable>
-        ) : null}
-
         {active ? (
-          <Pressable style={styles.actionButton} onPress={() => onSettle(transaction.id)}>
-            <Text style={styles.actionText}>Settle</Text>
+          <Pressable style={[styles.actionButton, styles.settleButton]} onPress={() => onSettle(transaction.id)}>
+            <Feather name="check-circle" size={14} color={colors.primary} />
+            <Text style={styles.settleText}>Settle</Text>
           </Pressable>
         ) : null}
 
-        <Pressable style={[styles.actionButton, styles.deleteButton]} onPress={() => onDelete(transaction.id)}>
-          <Text style={[styles.actionText, styles.deleteText]}>Delete</Text>
+        {showEditAction ? (
+          <Pressable style={styles.iconButton} onPress={() => onEdit(transaction)}>
+            <Feather name="edit-2" size={14} color={colors.textSecondary} />
+          </Pressable>
+        ) : null}
+
+        <Pressable style={styles.iconButton} onPress={() => onDelete(transaction.id)}>
+          <Feather name="trash-2" size={14} color={colors.negative} />
         </Pressable>
       </View>
     </View>
@@ -67,77 +84,106 @@ export const TransactionListItem = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 20,
     borderColor: colors.border,
     borderWidth: 1,
-    padding: 12,
-    gap: 6,
+    padding: 16,
+    marginBottom: 8,
   },
-  header: {
+  topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
+  },
+  mainInfo: {
+    flex: 1,
   },
   name: {
     color: colors.textPrimary,
     fontSize: 16,
     fontWeight: '700',
-    flex: 1,
+  },
+  date: {
+    color: colors.textMuted,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  amountInfo: {
+    alignItems: 'flex-end',
   },
   amount: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
   },
-  meta: {
-    color: colors.textSecondary,
-    fontSize: 13,
-  },
-  note: {
-    color: colors.textPrimary,
-    fontSize: 13,
-  },
-  statusRow: {
-    flexDirection: 'row',
-  },
-  badge: {
+  status: {
     fontSize: 11,
-    fontWeight: '700',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 999,
-    overflow: 'hidden',
+    textTransform: 'capitalize',
+    marginTop: 2,
   },
-  activeBadge: {
-    backgroundColor: '#2A3242',
+  activeStatus: {
     color: colors.warning,
   },
-  settledBadge: {
-    backgroundColor: '#1E382A',
+  settledStatus: {
     color: colors.positive,
+  },
+  noteContainer: {
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.border + '50',
+  },
+  note: {
+    color: colors.textSecondary,
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  dueRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+    backgroundColor: colors.warning + '10',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+    borderRadius: 6,
+  },
+  dueText: {
+    color: colors.warning,
+    fontSize: 11,
+    fontWeight: '700',
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 8,
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 14,
   },
   actionButton: {
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.primary + '15',
     paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
   },
-  actionText: {
-    color: colors.textPrimary,
-    fontWeight: '600',
+  settleButton: {
+    marginRight: 'auto',
+  },
+  settleText: {
+    color: colors.primary,
     fontSize: 13,
+    fontWeight: '700',
   },
-  deleteButton: {
-    borderColor: '#62333A',
-  },
-  deleteText: {
-    color: colors.negative,
+  iconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
+

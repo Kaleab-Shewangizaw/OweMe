@@ -30,6 +30,7 @@ export class LedgerService {
     const transaction: Transaction = {
       id: createId(),
       type: input.type,
+      category: input.category || 'other',
       personId: person.id,
       amount: Number(input.amount),
       date: input.date,
@@ -39,6 +40,7 @@ export class LedgerService {
       createdAt: now,
       updatedAt: now,
     };
+
 
     const nextData: LedgerData = {
       ...data,
@@ -73,6 +75,7 @@ export class LedgerService {
       return {
         ...item,
         type: update.type ?? item.type,
+        category: update.category ?? item.category,
         personId: nextPersonId,
         amount: update.amount ?? item.amount,
         date: update.date ?? item.date,
@@ -81,6 +84,7 @@ export class LedgerService {
         status: update.status ?? item.status,
         updatedAt,
       };
+
     });
 
     const nextData: LedgerData = {
@@ -108,20 +112,29 @@ export class LedgerService {
   }
 
   getDashboardSummary(data: LedgerData): DashboardSummary {
-    return data.transactions.reduce(
-      (summary, transaction) => {
-        if (transaction.status !== 'active') {
-          return summary;
-        }
+    const historicalBalance: { date: string; balance: number }[] = [];
+    let runningBalance = 0;
 
+    // Use active transactions only for summary, sorted by date
+    const activeSorted = [...data.transactions]
+      .filter(t => t.status === 'active')
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+    const summary = activeSorted.reduce(
+      (acc, transaction) => {
         if (transaction.type === 'lent') {
-          summary.totalLent += transaction.amount;
+          acc.totalLent += transaction.amount;
+          runningBalance += transaction.amount;
         } else {
-          summary.totalBorrowed += transaction.amount;
+          acc.totalBorrowed += transaction.amount;
+          runningBalance -= transaction.amount;
         }
 
-        summary.netBalance = summary.totalLent - summary.totalBorrowed;
-        return summary;
+        // Add to historical points (simplify by grouping by date if needed, but for now just points)
+        historicalBalance.push({ date: transaction.date, balance: runningBalance });
+
+        acc.netBalance = acc.totalLent - acc.totalBorrowed;
+        return acc;
       },
       {
         totalLent: 0,
@@ -129,7 +142,13 @@ export class LedgerService {
         netBalance: 0,
       }
     );
+
+    return {
+      ...summary,
+      historicalBalance,
+    };
   }
+
 
   getPersonSummaries(data: LedgerData): PersonSummary[] {
     const byPerson = new Map<string, Transaction[]>();

@@ -1,6 +1,9 @@
 export type TransactionType = 'lent' | 'borrowed';
 export type TransactionStatus = 'active' | 'settled';
 
+export type TransactionCategory = 'food' | 'shopping' | 'travel' | 'rent' | 'other';
+
+
 export interface User {
   id: string;
   name: string;
@@ -17,6 +20,7 @@ export interface Person {
 export interface Transaction {
   id: string;
   type: TransactionType;
+  category: TransactionCategory;
   personId: string;
   amount: number;
   date: string;
@@ -27,6 +31,7 @@ export interface Transaction {
   updatedAt: string;
 }
 
+
 export interface LedgerData {
   persons: Person[];
   transactions: Transaction[];
@@ -34,6 +39,7 @@ export interface LedgerData {
 
 export interface TransactionInput {
   type: TransactionType;
+  category: TransactionCategory;
   personName: string;
   amount: number;
   date: string;
@@ -41,8 +47,10 @@ export interface TransactionInput {
   note?: string;
 }
 
+
 export interface TransactionUpdate {
   type?: TransactionType;
+  category?: TransactionCategory;
   personName?: string;
   amount?: number;
   date?: string;
@@ -51,11 +59,14 @@ export interface TransactionUpdate {
   status?: TransactionStatus;
 }
 
+
 export interface DashboardSummary {
   totalLent: number;
   totalBorrowed: number;
   netBalance: number;
+  historicalBalance: { date: string; balance: number }[];
 }
+
 
 export interface PersonSummary {
   person: Person;

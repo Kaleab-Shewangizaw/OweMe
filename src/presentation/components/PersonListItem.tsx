@@ -12,32 +12,63 @@ const formatCurrency = (value: number): string => `$${Math.abs(value).toFixed(2)
 
 export const PersonListItem = ({ summary, onPress }: PersonListItemProps) => {
   const netPositive = summary.netBalance >= 0;
+  const initials = summary.person.name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
     <Pressable style={styles.container} onPress={() => onPress(summary.person.id)}>
-      <View>
+      <View style={styles.avatar}>
+        <Text style={styles.avatarText}>{initials}</Text>
+      </View>
+      
+      <View style={styles.info}>
         <Text style={styles.name}>{summary.person.name}</Text>
-        <Text style={styles.meta}>{summary.transactionCount} transactions</Text>
+        <Text style={styles.meta}>{summary.transactionCount} total records</Text>
       </View>
 
-      <Text style={[styles.balance, { color: netPositive ? colors.positive : colors.negative }]}>
-        {netPositive ? '+' : '-'}{formatCurrency(summary.netBalance)}
-      </Text>
+      <View style={styles.balanceInfo}>
+        <Text style={[styles.balance, { color: netPositive ? colors.positive : colors.negative }]}>
+          {netPositive ? '+' : '-'}{formatCurrency(summary.netBalance)}
+        </Text>
+        <Text style={styles.activeCount}>{summary.activeTransactionCount} active</Text>
+      </View>
     </Pressable>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: 12,
+    backgroundColor: colors.surface,
+    borderRadius: 20,
     borderColor: colors.border,
     borderWidth: 1,
-    padding: 12,
+    padding: 14,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 10,
+    gap: 12,
+    marginBottom: 4,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  avatarText: {
+    color: colors.primary,
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  info: {
+    flex: 1,
   },
   name: {
     color: colors.textPrimary,
@@ -45,12 +76,21 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   meta: {
-    color: colors.textSecondary,
+    color: colors.textMuted,
     fontSize: 12,
-    marginTop: 4,
+    marginTop: 2,
+  },
+  balanceInfo: {
+    alignItems: 'flex-end',
   },
   balance: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  activeCount: {
+    color: colors.textSecondary,
+    fontSize: 11,
+    marginTop: 2,
   },
 });
+

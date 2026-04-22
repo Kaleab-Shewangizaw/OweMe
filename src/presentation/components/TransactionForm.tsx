@@ -1,8 +1,10 @@
+import { Feather } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { Transaction, TransactionInput, TransactionType, TransactionUpdate } from '../../domain/models/entities';
+import { Transaction, TransactionCategory, TransactionInput, TransactionType, TransactionUpdate } from '../../domain/models/entities';
 import { isValidIsoDate, toIsoDate } from '../../shared/utils/date';
+import { CategoryIcon } from './CategoryIcon';
 import { colors } from '../theme/colors';
 
 type TransactionFormProps = {
@@ -14,6 +16,7 @@ type TransactionFormProps = {
 };
 
 const getTypeOptions = (): TransactionType[] => ['lent', 'borrowed'];
+const getCategoryOptions = (): TransactionCategory[] => ['food', 'shopping', 'travel', 'rent', 'other'];
 
 export const TransactionForm = ({
   onSubmit,
@@ -23,6 +26,7 @@ export const TransactionForm = ({
   onCancel,
 }: TransactionFormProps) => {
   const [type, setType] = useState<TransactionType>(initialValue?.type ?? 'lent');
+  const [category, setCategory] = useState<TransactionCategory>(initialValue?.category ?? 'other');
   const [personName, setPersonName] = useState(initialPersonName ?? '');
   const [amount, setAmount] = useState(initialValue ? String(initialValue.amount) : '');
   const [date, setDate] = useState(initialValue?.date ?? toIsoDate());
@@ -33,6 +37,7 @@ export const TransactionForm = ({
 
   useEffect(() => {
     setType(initialValue?.type ?? 'lent');
+    setCategory(initialValue?.category ?? 'other');
     setPersonName(initialPersonName ?? '');
     setAmount(initialValue ? String(initialValue.amount) : '');
     setDate(initialValue?.date ?? toIsoDate());
@@ -49,17 +54,12 @@ export const TransactionForm = ({
     }
 
     if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
-      setError('Enter a valid amount greater than 0.');
+      setError('Enter a valid amount.');
       return;
     }
 
     if (!isValidIsoDate(date)) {
-      setError('Date must be in YYYY-MM-DD format.');
-      return;
-    }
-
-    if (dueDate && !isValidIsoDate(dueDate)) {
-      setError('Due date must be in YYYY-MM-DD format.');
+      setError('Date format: YYYY-MM-DD');
       return;
     }
 
@@ -68,6 +68,7 @@ export const TransactionForm = ({
 
     const payload: TransactionInput | TransactionUpdate = {
       type,
+      category,
       personName: personName.trim(),
       amount: parsedAmount,
       date,
@@ -78,14 +79,10 @@ export const TransactionForm = ({
 
     try {
       await onSubmit(payload);
-
       if (!initialValue) {
         setPersonName('');
         setAmount('');
-        setDate(toIsoDate());
-        setDueDate('');
         setNote('');
-        setType('lent');
       }
     } finally {
       setSubmitting(false);
@@ -94,79 +91,90 @@ export const TransactionForm = ({
 
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Type</Text>
-      <View style={styles.segmentedControl}>
-        {getTypeOptions().map((option) => (
+      <View style={styles.tabRow}>
+        {getTypeOptions().map((opt) => (
           <Pressable
-            key={option}
-            style={[styles.segment, type === option ? styles.segmentActive : null]}
-            onPress={() => setType(option)}
+            key={opt}
+            style={[styles.tab, type === opt ? styles.tabActive : null]}
+            onPress={() => setType(opt)}
           >
-            <Text style={[styles.segmentText, type === option ? styles.segmentTextActive : null]}>
-              {option.toUpperCase()}
+            <Text style={[styles.tabText, type === opt ? styles.tabTextActive : null]}>
+              {opt.toUpperCase()}
             </Text>
           </Pressable>
         ))}
       </View>
 
-      <Text style={styles.label}>Person name</Text>
-      <TextInput
-        value={personName}
-        onChangeText={setPersonName}
-        placeholder="e.g. Alex"
-        placeholderTextColor={colors.textSecondary}
-        style={styles.input}
-      />
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Category</Text>
+        <View style={styles.categoryRow}>
+          {getCategoryOptions().map((cat) => (
+            <Pressable
+              key={cat}
+              style={[styles.catItem, category === cat ? styles.catItemActive : null]}
+              onPress={() => setCategory(cat)}
+            >
+              <CategoryIcon category={cat} size={14} />
+            </Pressable>
+          ))}
+        </View>
+      </View>
 
-      <Text style={styles.label}>Amount</Text>
-      <TextInput
-        value={amount}
-        onChangeText={setAmount}
-        placeholder="e.g. 120"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="decimal-pad"
-        style={styles.input}
-      />
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Who is this with?</Text>
+        <TextInput
+          value={personName}
+          onChangeText={setPersonName}
+          placeholder="Contact Name"
+          placeholderTextColor={colors.textMuted}
+          style={styles.input}
+        />
+      </View>
 
-      <Text style={styles.label}>Date (YYYY-MM-DD)</Text>
-      <TextInput
-        value={date}
-        onChangeText={setDate}
-        placeholder="2026-04-23"
-        placeholderTextColor={colors.textSecondary}
-        style={styles.input}
-      />
+      <View style={styles.row}>
+        <View style={[styles.inputGroup, { flex: 1 }]}>
+          <Text style={styles.label}>Amount</Text>
+          <TextInput
+            value={amount}
+            onChangeText={setAmount}
+            placeholder="0.00"
+            placeholderTextColor={colors.textMuted}
+            keyboardType="decimal-pad"
+            style={styles.input}
+          />
+        </View>
+        <View style={[styles.inputGroup, { flex: 1 }]}>
+          <Text style={styles.label}>Date</Text>
+          <TextInput
+            value={date}
+            onChangeText={setDate}
+            style={styles.input}
+          />
+        </View>
+      </View>
 
-      <Text style={styles.label}>Due date (optional)</Text>
-      <TextInput
-        value={dueDate}
-        onChangeText={setDueDate}
-        placeholder="2026-05-10"
-        placeholderTextColor={colors.textSecondary}
-        style={styles.input}
-      />
+      <View style={styles.inputGroup}>
+        <Text style={styles.label}>Notes (Optional)</Text>
+        <TextInput
+          value={note}
+          onChangeText={setNote}
+          placeholder="What was this for?"
+          placeholderTextColor={colors.textMuted}
+          style={[styles.input, styles.noteInput]}
+          multiline
+        />
+      </View>
 
-      <Text style={styles.label}>Note (optional)</Text>
-      <TextInput
-        value={note}
-        onChangeText={setNote}
-        placeholder="Reason or context"
-        placeholderTextColor={colors.textSecondary}
-        style={[styles.input, styles.noteInput]}
-        multiline
-      />
-
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       <View style={styles.actions}>
         {onCancel ? (
-          <Pressable style={styles.secondaryButton} onPress={onCancel}>
-            <Text style={styles.secondaryButtonText}>Cancel</Text>
+          <Pressable style={styles.cancelBtn} onPress={onCancel}>
+            <Text style={styles.cancelBtnText}>Cancel</Text>
           </Pressable>
         ) : null}
-
-        <Pressable style={styles.primaryButton} onPress={submit} disabled={submitting}>
-          <Text style={styles.primaryButtonText}>{submitting ? 'Saving...' : submitLabel}</Text>
+        <Pressable style={styles.submitBtn} onPress={submit} disabled={submitting}>
+          <Text style={styles.submitBtnText}>{submitting ? '...' : submitLabel}</Text>
         </Pressable>
       </View>
     </View>
@@ -175,86 +183,107 @@ export const TransactionForm = ({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 8,
+    gap: 16,
+  },
+  tabRow: {
+    flexDirection: 'row',
+    backgroundColor: colors.surfaceDeep,
+    borderRadius: 14,
+    padding: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  tabActive: {
+    backgroundColor: colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  tabText: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tabTextActive: {
+    color: colors.primary,
+  },
+  inputGroup: {
+    gap: 6,
   },
   label: {
     color: colors.textSecondary,
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '600',
+    marginLeft: 4,
   },
-  segmentedControl: {
+  categoryRow: {
     flexDirection: 'row',
     gap: 8,
+    marginTop: 2,
   },
-  segment: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: 10,
-    alignItems: 'center',
-    paddingVertical: 10,
+  catItem: {
+    opacity: 0.5,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    borderRadius: 14,
   },
-  segmentActive: {
-    backgroundColor: colors.accent,
-    borderColor: colors.accent,
-  },
-  segmentText: {
-    color: colors.textPrimary,
-    fontWeight: '700',
-    fontSize: 12,
-    letterSpacing: 0.8,
-  },
-  segmentTextActive: {
-    color: '#0D131D',
+  catItemActive: {
+    opacity: 1,
+    borderColor: colors.primary + '40',
   },
   input: {
-    backgroundColor: colors.surfaceAlt,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 10,
+    backgroundColor: colors.surfaceDeep,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     color: colors.textPrimary,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    fontSize: 14,
+    fontSize: 15,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 12,
   },
   noteInput: {
-    minHeight: 72,
+    minHeight: 80,
     textAlignVertical: 'top',
   },
-  error: {
+  errorText: {
     color: colors.negative,
     fontSize: 13,
+    textAlign: 'center',
   },
   actions: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
     marginTop: 4,
   },
-  secondaryButton: {
+  cancelBtn: {
     flex: 1,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 10,
+    paddingVertical: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
+    borderRadius: 16,
+    backgroundColor: colors.surfaceAlt,
   },
-  secondaryButtonText: {
-    color: colors.textPrimary,
+  cancelBtnText: {
+    color: colors.textSecondary,
     fontWeight: '700',
   },
-  primaryButton: {
-    flex: 1,
-    backgroundColor: colors.accent,
-    borderRadius: 10,
+  submitBtn: {
+    flex: 2,
+    paddingVertical: 14,
     alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
+    borderRadius: 16,
+    backgroundColor: colors.primary,
   },
-  primaryButtonText: {
-    color: '#0D131D',
+  submitBtnText: {
+    color: '#FFFFFF',
     fontWeight: '800',
-    fontSize: 13,
-    letterSpacing: 0.6,
+    fontSize: 15,
   },
 });
+
