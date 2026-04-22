@@ -83,23 +83,25 @@ export const InsightsScreen = ({ ledger }: InsightsScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: colors.background,
   },
   content: {
-    paddingHorizontal: 24,
+    paddingHorizontal: 20,
     paddingBottom: 120,
+    paddingTop: 10,
   },
-
   chart: {
-    gap: 16,
+    gap: 20,
     marginTop: 8,
   },
   barRow: {
-    gap: 8,
+    gap: 10,
   },
   barLabel: {
     color: colors.textPrimary,
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   barContainer: {
     flexDirection: 'row',
@@ -107,51 +109,53 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   bar: {
-    height: 8,
+    height: 10,
     backgroundColor: colors.primary,
-    borderRadius: 4,
+    borderRadius: 5,
   },
   barValue: {
     color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '800',
   },
   list: {
-    gap: 12,
+    gap: 2,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surfaceAlt,
-    padding: 12,
-    borderRadius: 14,
+    gap: 14,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   overdueRow: {
-    borderColor: colors.negative + '30',
-    borderWidth: 1,
+    borderBottomColor: colors.negative + '20',
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: colors.warning,
   },
   rowText: {
     flex: 1,
     color: colors.textPrimary,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
   },
   dateText: {
     color: colors.textMuted,
     fontSize: 12,
+    fontWeight: '600',
   },
   empty: {
     color: colors.textMuted,
     fontSize: 14,
     textAlign: 'center',
-    paddingVertical: 10,
+    paddingVertical: 20,
+    fontWeight: '500',
   },
 });
+
 

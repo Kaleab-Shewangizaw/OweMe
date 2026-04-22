@@ -41,36 +41,28 @@ export const SectionCard = ({ title, subtitle, children }: SectionCardProps) => 
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderWidth: 1,
-    borderRadius: 28,
-    padding: 20,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    marginBottom: 32,
   },
   header: {
-    marginBottom: 16,
+    marginBottom: 20,
+    paddingHorizontal: 4,
   },
   title: {
     color: colors.textPrimary,
-    fontSize: 19,
+    fontSize: 20,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   subtitle: {
     color: colors.textSecondary,
     fontSize: 13,
-    marginTop: 2,
-    fontWeight: '500',
+    marginTop: 4,
+    fontWeight: '600',
   },
   content: {
-    gap: 12,
+    gap: 16,
   },
 });
+
 
 

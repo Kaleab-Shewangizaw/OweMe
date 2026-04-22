@@ -1,12 +1,14 @@
 import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 import { useLedger } from './src/application/hooks/useLedger';
 import { DashboardScreen } from './src/presentation/screens/DashboardScreen';
 import { InsightsScreen } from './src/presentation/screens/InsightsScreen';
+import { LockScreen } from './src/presentation/screens/LockScreen';
 import { PeopleScreen } from './src/presentation/screens/PeopleScreen';
+import { ProfileScreen } from './src/presentation/screens/ProfileScreen';
 import { TransactionsScreen } from './src/presentation/screens/TransactionsScreen';
 import { colors } from './src/presentation/theme/colors';
 
@@ -20,24 +22,50 @@ const tabs: { key: TabKey; label: string; icon: string }[] = [
   { key: 'insights', label: 'Trends', icon: 'trending-up' },
 ];
 
-
 export default function App() {
   const ledger = useLedger();
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
+  const [authenticated, setAuthenticated] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  if (!authenticated) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar style="light" />
+        <LockScreen onUnlocked={() => setAuthenticated(true)} />
+      </SafeAreaView>
+    );
+  }
+
+  if (showProfile) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar style="light" />
+        <ProfileScreen onBack={() => setShowProfile(false)} />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
       
       <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Good morning,</Text>
+        <View style={styles.logoRow}>
+          <Image source={require('./assets/logo.png')} style={styles.logoImg} />
           <Text style={styles.appName}>OweMe</Text>
         </View>
-        <Pressable style={styles.profileBtn}>
-          <Feather name="bell" size={20} color={colors.textPrimary} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          <Pressable style={styles.headerBtn}>
+            <Feather name="bell" size={20} color={colors.textPrimary} />
+          </Pressable>
+          <Pressable style={[styles.headerBtn, styles.userBtn]} onPress={() => setShowProfile(true)}>
+            <Feather name="user" size={20} color={colors.textPrimary} />
+            <View style={styles.onlineBadge} />
+          </Pressable>
+        </View>
       </View>
+
 
       <View style={styles.content}>
         {ledger.loading ? (
@@ -72,7 +100,6 @@ export default function App() {
                   size={22} 
                   color={isActive ? colors.background : colors.textMuted} 
                 />
-
               </View>
               <Text style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>
                 {tab.label}
@@ -102,7 +129,6 @@ const renderContent = (tab: TabKey, ledger: ReturnType<typeof useLedger>) => {
   }
 };
 
-
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
@@ -112,24 +138,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 20,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
-  greeting: {
-    color: colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '500',
+  logoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  appName: {
-    color: colors.textPrimary,
-    fontSize: 26,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  profileBtn: {
-    width: 44,
-    height: 44,
+  logoCircle: {
+    width: 40,
+    height: 40,
     borderRadius: 14,
     backgroundColor: colors.surface,
     alignItems: 'center',
@@ -137,6 +157,46 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
+  logoImg: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+  },
+  appName: {
+    color: colors.textPrimary,
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  headerBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  userBtn: {
+    borderColor: colors.primary + '20',
+  },
+  onlineBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.positive,
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+
   content: {
     flex: 1,
   },

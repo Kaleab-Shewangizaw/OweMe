@@ -42,21 +42,18 @@ export const PersonListItem = ({ summary, onPress }: PersonListItemProps) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
-    borderRadius: 20,
-    borderColor: colors.border,
-    borderWidth: 1,
-    padding: 14,
+    paddingVertical: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 4,
+    gap: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
   avatar: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: colors.surfaceAlt,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
@@ -65,32 +62,38 @@ const styles = StyleSheet.create({
   avatarText: {
     color: colors.primary,
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
   },
   info: {
     flex: 1,
   },
   name: {
     color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 17,
+    fontWeight: '800',
+    letterSpacing: -0.3,
   },
   meta: {
     color: colors.textMuted,
     fontSize: 12,
     marginTop: 2,
+    fontWeight: '500',
   },
   balanceInfo: {
     alignItems: 'flex-end',
   },
   balance: {
-    fontSize: 16,
-    fontWeight: '800',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
   activeCount: {
     color: colors.textSecondary,
     fontSize: 11,
-    marginTop: 2,
+    marginTop: 4,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
 });
+
 
