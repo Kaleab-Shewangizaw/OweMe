@@ -26,7 +26,7 @@ export default function App() {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
       <View style={styles.appBar}>
-        <Text style={styles.title}>Ledgerly</Text>
+        <Text style={styles.title}>OweMe</Text>
       </View>
 
       <View style={styles.tabRow}>

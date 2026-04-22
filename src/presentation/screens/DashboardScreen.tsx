@@ -15,7 +15,7 @@ export const DashboardScreen = ({ ledger }: DashboardScreenProps) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Ledgerly Dashboard</Text>
+      <Text style={styles.title}>Your Dashboard</Text>
       <Text style={styles.subtitle}>Track your person-to-person debts with clarity.</Text>
 
       <View style={styles.grid}>
