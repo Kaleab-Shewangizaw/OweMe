@@ -4,12 +4,14 @@ import { StyleSheet, Text, View, Pressable, Animated } from 'react-native';
 import { colors } from '../theme/colors';
 
 type LockScreenProps = {
-  onUnlocked: () => void;
+  mode: 'setup' | 'unlock';
+  storedPin?: string;
+  onSuccess: (pin: string) => void;
 };
 
-export const LockScreen = ({ onUnlocked }: LockScreenProps) => {
+export const LockScreen = ({ mode, storedPin, onSuccess }: LockScreenProps) => {
   const [pin, setPin] = useState<string>('');
-  const correctPin = '1234'; // Mocked pin
+  const [confirmPin, setConfirmPin] = useState<string | null>(null);
   const shakeAnim = new Animated.Value(0);
 
   const handlePress = (num: string) => {
@@ -24,29 +26,57 @@ export const LockScreen = ({ onUnlocked }: LockScreenProps) => {
 
   useEffect(() => {
     if (pin.length === 4) {
-      if (pin === correctPin) {
-        onUnlocked();
+      if (mode === 'setup') {
+        if (!confirmPin) {
+          setConfirmPin(pin);
+          setPin('');
+        } else {
+          if (pin === confirmPin) {
+            onSuccess(pin);
+          } else {
+            triggerShake();
+            setConfirmPin(null);
+          }
+        }
       } else {
-        // Shake animation for error
-        Animated.sequence([
-          Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
-          Animated.timing(shakeAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
-          Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
-          Animated.timing(shakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
-        ]).start(() => setPin(''));
+        if (pin === storedPin) {
+          onSuccess(pin);
+        } else {
+          triggerShake();
+        }
       }
     }
   }, [pin]);
+
+  const triggerShake = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 10, duration: 100, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 100, useNativeDriver: true }),
+    ]).start(() => setPin(''));
+  };
+
+  const getTitle = () => {
+    if (mode === 'unlock') return 'Secure Access';
+    return confirmPin ? 'Confirm PIN' : 'Create PIN';
+  };
+
+  const getSubtitle = () => {
+    if (mode === 'unlock') return 'Enter your PIN to continue';
+    return confirmPin ? 'Enter your PIN again' : 'Set a 4-digit code for your ledger';
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={styles.logoCircle}>
-          <Feather name="lock" size={32} color={colors.primary} />
+          <Feather name={mode === 'unlock' ? "lock" : "shield"} size={32} color={colors.primary} />
         </View>
-        <Text style={styles.title}>Secure Access</Text>
-        <Text style={styles.subtitle}>Enter your PIN to continue</Text>
+        <Text style={styles.title}>{getTitle()}</Text>
+        <Text style={styles.subtitle}>{getSubtitle()}</Text>
       </View>
+
 
       <Animated.View style={[styles.dotsRow, { transform: [{ translateX: shakeAnim }] }]}>
         {[0, 1, 2, 3].map(i => (

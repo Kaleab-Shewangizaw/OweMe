@@ -7,6 +7,10 @@ const LEDGER_KEY = 'ledgerly-ledger-data-v1';
 const EMPTY_DATA: LedgerData = {
   persons: [],
   transactions: [],
+  preferences: {
+    isSetupComplete: false,
+    biometricsEnabled: false,
+  },
 };
 
 export class LocalLedgerRepository implements LedgerRepository {
@@ -14,8 +18,15 @@ export class LocalLedgerRepository implements LedgerRepository {
 
   async getLedgerData(): Promise<LedgerData> {
     const data = await this.storageClient.get<LedgerData>(LEDGER_KEY);
-    return data ?? EMPTY_DATA;
+    if (!data) return EMPTY_DATA;
+    
+    // Migration: ensure preferences exist
+    if (!data.preferences) {
+      data.preferences = EMPTY_DATA.preferences;
+    }
+    return data;
   }
+
 
   async saveLedgerData(data: LedgerData): Promise<void> {
     await this.storageClient.set<LedgerData>(LEDGER_KEY, data);

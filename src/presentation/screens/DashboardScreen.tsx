@@ -7,19 +7,30 @@ import { colors } from '../theme/colors';
 
 type DashboardScreenProps = {
   ledger: LedgerViewModel;
+  onAction: (action: 'Lend' | 'Borrow' | 'Split' | 'Settle') => void;
 };
+
 
 const screenWidth = Dimensions.get('window').width;
 
 const formatCurrency = (value: number): string => `$${Math.abs(value).toLocaleString(undefined, { minimumFractionDigits: 2 })}`;
 
-export const DashboardScreen = ({ ledger }: DashboardScreenProps) => {
+export const DashboardScreen = ({ ledger, onAction }: DashboardScreenProps) => {
+
   const { totalLent, totalBorrowed, netBalance, historicalBalance } = ledger.dashboard;
 
+  // Ensure we always have at least 2 points for the chart kit to render correctly
+  const chartPoints = historicalBalance.length > 1 
+    ? historicalBalance.slice(-6) 
+    : [
+        { date: 'Start', balance: 0 },
+        ...(historicalBalance.length > 0 ? historicalBalance : [{ date: 'Today', balance: 0 }])
+      ];
+
   const chartData = {
-    labels: historicalBalance.slice(-6).map(b => b.date.split('-')[2]),
+    labels: chartPoints.map(b => b.date.includes('-') ? b.date.split('-')[2] : b.date),
     datasets: [{
-      data: historicalBalance.length > 0 ? historicalBalance.slice(-6).map(b => b.balance) : [0],
+      data: chartPoints.map(b => b.balance),
       color: (opacity = 1) => colors.primary,
       strokeWidth: 4
     }]
@@ -28,6 +39,7 @@ export const DashboardScreen = ({ ledger }: DashboardScreenProps) => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
       {/* Hero Balance Section */}
+      {/* ... Hero Content ... */}
       <View style={styles.hero}>
         <View style={styles.heroContent}>
           <Text style={styles.heroLabel}>Your Net Worth</Text>
@@ -75,7 +87,7 @@ export const DashboardScreen = ({ ledger }: DashboardScreenProps) => {
             { icon: 'users', label: 'Split', color: colors.catShop },
             { icon: 'repeat', label: 'Settle', color: colors.positive },
           ].map((action, i) => (
-            <Pressable key={i} style={styles.actionItem}>
+            <Pressable key={i} style={styles.actionItem} onPress={() => onAction(action.label as any)}>
               <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
                 <Feather name={action.icon as any} size={22} color={action.color} />
               </View>
@@ -86,38 +98,36 @@ export const DashboardScreen = ({ ledger }: DashboardScreenProps) => {
       </View>
 
       {/* Immersive Chart Section */}
-      {historicalBalance.length > 1 && (
-        <View style={styles.chartSection}>
-          <Text style={styles.sectionHeader}>Activity Trend</Text>
-          <LineChart
-            data={chartData}
-            width={screenWidth - 40}
-            height={200}
-            chartConfig={{
-              backgroundColor: colors.background,
-              backgroundGradientFrom: colors.background,
-              backgroundGradientTo: colors.background,
-              decimalPlaces: 0,
-              color: (opacity = 1) => colors.primary,
-              labelColor: (opacity = 1) => colors.textMuted,
-              strokeWidth: 2,
-              propsForDots: {
-                r: "5",
-                strokeWidth: "2",
-                stroke: colors.background
-              },
-              propsForBackgroundLines: {
-                stroke: colors.border,
-                strokeDasharray: '4',
-              }
-            }}
-            bezier
-            withVerticalLines={false}
-            withHorizontalLines={true}
-            style={styles.chart}
-          />
-        </View>
-      )}
+      <View style={styles.chartSection}>
+        <Text style={styles.sectionHeader}>Activity Trend</Text>
+        <LineChart
+          data={chartData}
+          width={screenWidth - 40}
+          height={200}
+          chartConfig={{
+            backgroundColor: colors.background,
+            backgroundGradientFrom: colors.background,
+            backgroundGradientTo: colors.background,
+            decimalPlaces: 0,
+            color: (opacity = 1) => colors.primary,
+            labelColor: (opacity = 1) => colors.textMuted,
+            strokeWidth: 2,
+            propsForDots: {
+              r: "6",
+              strokeWidth: "3",
+              stroke: colors.background
+            },
+            propsForBackgroundLines: {
+              stroke: colors.border,
+              strokeDasharray: '4',
+            }
+          }}
+          bezier
+          withVerticalLines={false}
+          withHorizontalLines={true}
+          style={styles.chart}
+        />
+      </View>
 
       {/* Fun Glance Section */}
       <View style={[styles.infoSection, { backgroundColor: colors.surface }]}>
@@ -137,6 +147,7 @@ export const DashboardScreen = ({ ledger }: DashboardScreenProps) => {
     </ScrollView>
   );
 };
+
 
 const styles = StyleSheet.create({
   container: {

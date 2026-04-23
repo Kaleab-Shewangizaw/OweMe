@@ -32,10 +32,20 @@ export interface Transaction {
 }
 
 
+export interface UserPreferences {
+  pin?: string;
+  isSetupComplete: boolean;
+  biometricsEnabled: boolean;
+  name?: string;
+  email?: string;
+}
+
 export interface LedgerData {
   persons: Person[];
   transactions: Transaction[];
+  preferences: UserPreferences;
 }
+
 
 export interface TransactionInput {
   type: TransactionType;

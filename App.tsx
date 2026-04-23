@@ -1,12 +1,14 @@
 import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
-import { Image, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+
 
 import { useLedger } from './src/application/hooks/useLedger';
 import { DashboardScreen } from './src/presentation/screens/DashboardScreen';
 import { InsightsScreen } from './src/presentation/screens/InsightsScreen';
 import { LockScreen } from './src/presentation/screens/LockScreen';
+import { NotificationsScreen } from './src/presentation/screens/NotificationsScreen';
 import { PeopleScreen } from './src/presentation/screens/PeopleScreen';
 import { ProfileScreen } from './src/presentation/screens/ProfileScreen';
 import { TransactionsScreen } from './src/presentation/screens/TransactionsScreen';
@@ -27,15 +29,40 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('dashboard');
   const [authenticated, setAuthenticated] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
-  if (!authenticated) {
+  // Authentication Flow
+  if (!authenticated && !ledger.loading) {
+    const mode = ledger.preferences.isSetupComplete ? 'unlock' : 'setup';
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="light" />
-        <LockScreen onUnlocked={() => setAuthenticated(true)} />
+        <LockScreen 
+          mode={mode} 
+          storedPin={ledger.preferences.pin}
+          onSuccess={(pin) => {
+            if (mode === 'setup') {
+              ledger.updatePreferences({ pin, isSetupComplete: true });
+            }
+            setAuthenticated(true);
+          }} 
+        />
       </SafeAreaView>
     );
   }
+
+  const handleDashboardAction = (action: 'Lend' | 'Borrow' | 'Split' | 'Settle') => {
+    switch (action) {
+      case 'Lend':
+      case 'Borrow':
+      case 'Split':
+        setActiveTab('transaction_new');
+        break;
+      case 'Settle':
+        setActiveTab('transactions_history');
+        break;
+    }
+  };
 
   if (showProfile) {
     return (
@@ -46,17 +73,29 @@ export default function App() {
     );
   }
 
+  if (showNotifications) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar style="light" />
+        <NotificationsScreen onBack={() => setShowNotifications(false)} />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
       
       <View style={styles.header}>
         <View style={styles.logoRow}>
-          <Image source={require('./assets/logo.png')} style={styles.logoImg} />
+          <View style={styles.logoCircle}>
+            <Feather name="layers" size={18} color={colors.primary} />
+          </View>
           <Text style={styles.appName}>OweMe</Text>
         </View>
         <View style={styles.headerActions}>
-          <Pressable style={styles.headerBtn}>
+
+          <Pressable style={styles.headerBtn} onPress={() => setShowNotifications(true)}>
             <Feather name="bell" size={20} color={colors.textPrimary} />
           </Pressable>
           <Pressable style={[styles.headerBtn, styles.userBtn]} onPress={() => setShowProfile(true)}>
@@ -65,7 +104,6 @@ export default function App() {
           </Pressable>
         </View>
       </View>
-
 
       <View style={styles.content}>
         {ledger.loading ? (
@@ -81,7 +119,7 @@ export default function App() {
         ) : null}
 
         {!ledger.loading && !ledger.error ? (
-          <View style={{ flex: 1 }}>{renderContent(activeTab, ledger)}</View>
+          <View style={{ flex: 1 }}>{renderContent(activeTab, ledger, handleDashboardAction)}</View>
         ) : null}
       </View>
 
@@ -112,10 +150,10 @@ export default function App() {
   );
 }
 
-const renderContent = (tab: TabKey, ledger: ReturnType<typeof useLedger>) => {
+const renderContent = (tab: TabKey, ledger: any, onAction: any) => {
   switch (tab) {
     case 'dashboard':
-      return <DashboardScreen ledger={ledger} />;
+      return <DashboardScreen ledger={ledger} onAction={onAction} />;
     case 'people':
       return <PeopleScreen ledger={ledger} />;
     case 'transaction_new':
@@ -128,6 +166,7 @@ const renderContent = (tab: TabKey, ledger: ReturnType<typeof useLedger>) => {
       return null;
   }
 };
+
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -157,12 +196,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
   },
-  logoImg: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-  },
   appName: {
+
     color: colors.textPrimary,
     fontSize: 22,
     fontWeight: '900',

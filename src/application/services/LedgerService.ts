@@ -7,6 +7,7 @@ import {
   Transaction,
   TransactionInput,
   TransactionUpdate,
+  UserPreferences,
 } from '../../domain/models/entities';
 import { LedgerRepository } from '../../domain/repositories/LedgerRepository';
 import { daysUntil } from '../../shared/utils/date';
@@ -21,6 +22,21 @@ export class LedgerService {
   async getLedgerData(): Promise<LedgerData> {
     return this.repository.getLedgerData();
   }
+
+  async updatePreferences(update: Partial<UserPreferences>): Promise<LedgerData> {
+    const data = await this.repository.getLedgerData();
+    const nextData: LedgerData = {
+      ...data,
+      preferences: {
+        ...data.preferences,
+        ...update,
+      },
+    };
+    await this.repository.saveLedgerData(nextData);
+    return nextData;
+  }
+
+
 
   async addTransaction(input: TransactionInput): Promise<LedgerData> {
     const data = await this.repository.getLedgerData();
@@ -115,39 +131,37 @@ export class LedgerService {
     const historicalBalance: { date: string; balance: number }[] = [];
     let runningBalance = 0;
 
+    // Add a baseline starting point
+    const today = new Date().toISOString().split('T')[0];
+    historicalBalance.push({ date: today, balance: 0 });
+
     // Use active transactions only for summary, sorted by date
     const activeSorted = [...data.transactions]
       .filter(t => t.status === 'active')
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    const summary = activeSorted.reduce(
-      (acc, transaction) => {
-        if (transaction.type === 'lent') {
-          acc.totalLent += transaction.amount;
-          runningBalance += transaction.amount;
-        } else {
-          acc.totalBorrowed += transaction.amount;
-          runningBalance -= transaction.amount;
-        }
+    let totalLent = 0;
+    let totalBorrowed = 0;
 
-        // Add to historical points (simplify by grouping by date if needed, but for now just points)
-        historicalBalance.push({ date: transaction.date, balance: runningBalance });
-
-        acc.netBalance = acc.totalLent - acc.totalBorrowed;
-        return acc;
-      },
-      {
-        totalLent: 0,
-        totalBorrowed: 0,
-        netBalance: 0,
+    activeSorted.forEach((transaction) => {
+      if (transaction.type === 'lent') {
+        totalLent += transaction.amount;
+        runningBalance += transaction.amount;
+      } else {
+        totalBorrowed += transaction.amount;
+        runningBalance -= transaction.amount;
       }
-    );
+      historicalBalance.push({ date: transaction.date, balance: runningBalance });
+    });
 
     return {
-      ...summary,
+      totalLent,
+      totalBorrowed,
+      netBalance: totalLent - totalBorrowed,
       historicalBalance,
     };
   }
+
 
 
   getPersonSummaries(data: LedgerData): PersonSummary[] {

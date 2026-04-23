@@ -8,6 +8,7 @@ import {
   Transaction,
   TransactionInput,
   TransactionUpdate,
+  UserPreferences,
 } from '../../domain/models/entities';
 import { LocalLedgerRepository } from '../../data/repositories/LocalLedgerRepository';
 import { AsyncStorageClient } from '../../data/storage/AsyncStorageClient';
@@ -19,6 +20,10 @@ const service = new LedgerService(repository);
 const EMPTY_DATA: LedgerData = {
   persons: [],
   transactions: [],
+  preferences: {
+    isSetupComplete: false,
+    biometricsEnabled: false,
+  },
 };
 
 export const useLedger = () => {
@@ -63,6 +68,11 @@ export const useLedger = () => {
     setData(updated);
   }, []);
 
+  const updatePreferences = useCallback(async (update: Partial<UserPreferences>) => {
+    const updated = await service.updatePreferences(update);
+    setData(updated);
+  }, []);
+
   const dashboard = useMemo(() => service.getDashboardSummary(data), [data]);
   const personSummaries = useMemo(() => service.getPersonSummaries(data), [data]);
   const insights = useMemo<InsightSummary>(() => service.getInsights(data), [data]);
@@ -81,6 +91,7 @@ export const useLedger = () => {
     loading,
     error,
     data,
+    preferences: data.preferences,
     dashboard,
     personSummaries,
     insights,
@@ -88,6 +99,7 @@ export const useLedger = () => {
     updateTransaction,
     deleteTransaction,
     markAsSettled,
+    updatePreferences,
     getTransactionsByPerson,
     getPersonById,
   };
@@ -95,3 +107,4 @@ export const useLedger = () => {
 
 export type LedgerViewModel = ReturnType<typeof useLedger>;
 export type { PersonSummary };
+
