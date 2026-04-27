@@ -257,9 +257,9 @@ const styles = StyleSheet.create({
   chartSection: {
     paddingHorizontal: 20,
     marginBottom: 32,
+    alignItems: 'center',
   },
   chart: {
-    marginLeft: -20,
     marginTop: 10,
   },
   infoSection: {

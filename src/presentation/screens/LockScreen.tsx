@@ -108,9 +108,9 @@ export const LockScreen = ({ mode, storedPin, onSuccess }: LockScreenProps) => {
         })}
       </View>
 
-      <Pressable style={styles.forgotBtn}>
-        <Text style={styles.forgotText}>Forgot PIN?</Text>
-      </Pressable>
+      <View style={[styles.forgotBtn, { opacity: 0.5 }]}>
+        <Text style={styles.forgotText}>Forgot PIN? <Text style={styles.comingSoon}>Coming Next Version</Text></Text>
+      </View>
     </View>
   );
 };
@@ -191,5 +191,10 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '700',
     fontSize: 14,
+  },
+  comingSoon: {
+    color: colors.warning,
+    fontSize: 11,
+    fontWeight: '800',
   },
 });

@@ -68,7 +68,10 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
             subtitle={`Records for this contact`}
           >
             {selectedTransactions.length === 0 ? (
-              <Text style={styles.empty}>No entries yet.</Text>
+              <View>
+                <Text style={styles.empty}>No entries yet.</Text>
+                <Text style={styles.comingSoon}>Settlement history & analytics coming next version</Text>
+              </View>
             ) : (
               <View style={styles.list}>
                 {selectedTransactions.map((transaction) => (
@@ -128,6 +131,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'center',
     marginTop: 10,
+  },
+  comingSoon: {
+    color: colors.warning,
+    fontSize: 12,
+    textAlign: 'center',
+    marginTop: 4,
+    fontWeight: '700',
   },
 });
 

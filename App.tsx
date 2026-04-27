@@ -1,8 +1,8 @@
 import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-
+import * as LocalAuthentication from 'expo-local-authentication';
 
 import { useLedger } from './src/application/hooks/useLedger';
 import { DashboardScreen } from './src/presentation/screens/DashboardScreen';
@@ -30,6 +30,40 @@ export default function App() {
   const [authenticated, setAuthenticated] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [usePinFallback, setUsePinFallback] = useState(false);
+
+  useEffect(() => {
+    const attemptBiometricAuth = async () => {
+      if (ledger.preferences.biometricsEnabled && ledger.preferences.isSetupComplete && !authenticated && !usePinFallback) {
+        try {
+          const hasHardware = await LocalAuthentication.hasHardwareAsync();
+          if (hasHardware) {
+            const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+            if (isEnrolled) {
+              const result = await LocalAuthentication.authenticateAsync({
+                promptMessage: 'Authenticate to access OweMe',
+              });
+              if (result.success) {
+                setAuthenticated(true);
+              } else {
+                setUsePinFallback(true);
+              }
+            } else {
+              setUsePinFallback(true);
+            }
+          } else {
+            setUsePinFallback(true);
+          }
+        } catch (error) {
+          setUsePinFallback(true);
+        }
+      }
+    };
+
+    if (!ledger.loading) {
+      attemptBiometricAuth();
+    }
+  }, [ledger.preferences.biometricsEnabled, ledger.preferences.isSetupComplete, authenticated, usePinFallback, ledger.loading]);
 
   // Authentication Flow
   if (!authenticated && !ledger.loading) {
@@ -37,15 +71,16 @@ export default function App() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="light" />
-        <LockScreen 
-          mode={mode} 
+        <LockScreen
+          mode={mode}
           storedPin={ledger.preferences.pin}
           onSuccess={(pin) => {
             if (mode === 'setup') {
               ledger.updatePreferences({ pin, isSetupComplete: true });
             }
             setAuthenticated(true);
-          }} 
+            setUsePinFallback(false);
+          }}
         />
       </SafeAreaView>
     );
@@ -68,7 +103,7 @@ export default function App() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <StatusBar style="light" />
-        <ProfileScreen onBack={() => setShowProfile(false)} />
+        <ProfileScreen onBack={() => setShowProfile(false)} ledger={ledger} />
       </SafeAreaView>
     );
   }

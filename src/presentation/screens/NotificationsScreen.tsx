@@ -8,9 +8,8 @@ type NotificationsScreenProps = {
 
 export const NotificationsScreen = ({ onBack }: NotificationsScreenProps) => {
   const notifications = [
-    { id: '1', title: 'Payment Due', message: 'You have an upcoming payment due tomorrow for Sarah.', time: '2h ago', icon: 'clock', color: colors.warning },
-    { id: '2', title: 'Settlement confirmed', message: 'John marked the transaction as settled.', time: '5h ago', icon: 'check-circle', color: colors.positive },
-    { id: '3', title: 'New Record', message: 'A new record was added by you for Mike.', time: '1d ago', icon: 'plus-circle', color: colors.primary },
+    { id: '1', title: 'Notifications', message: 'coming soon', time: '', icon: 'clock', color: colors.warning },
+    
   ];
 
   return (
@@ -20,9 +19,9 @@ export const NotificationsScreen = ({ onBack }: NotificationsScreenProps) => {
           <Feather name="chevron-left" size={24} color={colors.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <Pressable style={styles.clearBtn}>
-          <Text style={styles.clearText}>Clear All</Text>
-        </Pressable>
+        <View style={[styles.clearBtn, { opacity: 0.5 }]}>
+          <Text style={styles.clearText}>Clear All <Text style={styles.comingSoon}>Coming Next Version</Text></Text>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
@@ -137,5 +136,10 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     fontSize: 16,
     fontWeight: '600',
+  },
+  comingSoon: {
+    color: colors.warning,
+    fontSize: 11,
+    fontWeight: '800',
   },
 });
