@@ -156,8 +156,8 @@ export const ProfileScreen = ({ onBack, ledger }: ProfileScreenProps) => {
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>Preferences</Text>
           <View style={styles.options}>
-            <MenuOption icon="moon" label="Dark Theme" sublabel="Optimized for late night tracking" hasSwitch active />
-            <MenuOption icon="bell" label="Reminders" sublabel="Get notified about upcoming dues" hasSwitch active />
+            <MenuOption icon="moon" label="Dark Theme" sublabel="Optimized for late night tracking" hasSwitch active disabled />
+            <MenuOption icon="bell" label="Reminders" sublabel="Get notified about upcoming dues" hasSwitch disabled />
             <MenuOption icon="database" label="Backup Data" sublabel="Sync your data to the cloud" comingSoon />
           </View>
         </View>
@@ -208,8 +208,8 @@ export const ProfileScreen = ({ onBack, ledger }: ProfileScreenProps) => {
   );
 };
 
-const MenuOption = ({ icon, label, sublabel, hasSwitch, active, comingSoon, onPress, onToggle }: any) => (
-  <Pressable style={[styles.optionRow, comingSoon && { opacity: 0.5 }]} onPress={onPress}>
+const MenuOption = ({ icon, label, sublabel, hasSwitch, active, disabled, comingSoon, onPress, onToggle }: any) => (
+  <Pressable style={[styles.optionRow, comingSoon && { opacity: 0.5 }]} onPress={onPress} disabled={disabled}>
     <View style={[styles.optionIcon, { backgroundColor: colors.surface }]}>
       <Feather name={icon} size={18} color={colors.primary} />
     </View>
@@ -221,8 +221,8 @@ const MenuOption = ({ icon, label, sublabel, hasSwitch, active, comingSoon, onPr
       )}
     </View>
     {hasSwitch ? (
-      <Pressable onPress={onToggle} style={[styles.switch, active && styles.switchActive]}>
-        <View style={[styles.switchThumb, active && styles.switchThumbActive]} />
+      <Pressable onPress={disabled ? undefined : onToggle} style={[styles.switch, active && styles.switchActive, disabled && styles.switchDisabled]}>
+        <View style={[styles.switchThumb, active && styles.switchThumbActive, disabled && styles.switchThumbDisabled]} />
       </Pressable>
     ) : (
       <Feather name="chevron-right" size={18} color={colors.textMuted} />
@@ -368,6 +368,12 @@ const styles = StyleSheet.create({
   switchThumbActive: {
     backgroundColor: colors.primary,
     alignSelf: 'flex-end',
+  },
+  switchDisabled: {
+    opacity: 0.5,
+  },
+  switchThumbDisabled: {
+    backgroundColor: colors.textMuted,
   },
   logoutBtn: {
     flexDirection: 'row',
