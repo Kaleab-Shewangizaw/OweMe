@@ -83,6 +83,11 @@ export const useLedger = () => {
     setData(updated);
   }, []);
 
+  const deletePerson = useCallback(async (personId: string) => {
+    const updated = await service.deletePerson(personId);
+    setData(updated);
+  }, []);
+
   const dashboard = useMemo(() => service.getDashboardSummary(data), [data]);
   const personSummaries = useMemo(() => service.getPersonSummaries(data), [data]);
   const insights = useMemo<InsightSummary>(() => service.getInsights(data), [data]);
@@ -114,6 +119,7 @@ export const useLedger = () => {
     getPersonById,
     updatePersonName,
     mergePersons,
+    deletePerson,
   };
 };
 

@@ -310,4 +310,19 @@ export class LedgerService {
     await this.repository.saveLedgerData(nextData);
     return nextData;
   }
+
+  async deletePerson(personId: string): Promise<LedgerData> {
+    const data = await this.repository.getLedgerData();
+    const nextPersons = data.persons.filter((p) => p.id !== personId);
+    const nextTransactions = data.transactions.filter((t) => t.personId !== personId);
+
+    const nextData: LedgerData = {
+      ...data,
+      persons: nextPersons,
+      transactions: nextTransactions,
+    };
+
+    await this.repository.saveLedgerData(nextData);
+    return nextData;
+  }
 }

@@ -71,6 +71,25 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
     setSettleModal({ open: false, transaction: null, amount: '', error: '' });
   };
 
+  const handleDeletePerson = (personId: string, name: string) => {
+    Alert.alert(
+      'Delete Contact?',
+      `This will permanently remove ${name} and all their transaction history. This action cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete Everything', 
+          style: 'destructive', 
+          onPress: async () => {
+            await ledger.deletePerson(personId);
+            setShowRecordsModal(false);
+            setSelected(null);
+          } 
+        },
+      ]
+    );
+  };
+
   const selectedTransactions = useMemo(() => {
     if (!selected) return [];
     return ledger.getTransactionsByPerson(selected.person.id);
@@ -110,49 +129,76 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
                 </Pressable>
                 <View style={styles.headerTitleContainer}>
                   {isEditingName ? (
-                    <TextInput
-                      value={editingName}
-                      onChangeText={setEditingName}
-                      placeholder="Contact name"
-                      placeholderTextColor={colors.textMuted}
-                      style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '900' }}
-                    />
+                    <View style={styles.editNameContainer}>
+                      <TextInput
+                        value={editingName}
+                        onChangeText={setEditingName}
+                        placeholder="Contact name"
+                        placeholderTextColor={colors.textMuted}
+                        style={styles.editNameInput}
+                        autoFocus
+                      />
+                    </View>
                   ) : (
-                    <Text style={styles.modalTitle}>{selected?.person.name}</Text>
+                    <>
+                      <Text style={styles.modalTitle}>{selected?.person.name}</Text>
+                      <Text style={styles.modalSubtitle}>Contact Activity</Text>
+                    </>
                   )}
-                  <Text style={styles.modalSubtitle}>Contact Activity</Text>
                 </View>
-                <View style={{ width: 44 }}>
+                <View style={styles.headerActions}>
                   {selected ? (
                     isEditingName ? (
-                      <Pressable onPress={() => {
-                        const newName = editingName.trim();
-                        if (!newName) { Alert.alert('Invalid name', 'Name cannot be empty.'); return; }
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <Pressable 
+                          onPress={() => setIsEditingName(false)} 
+                          style={[styles.actionButton, { backgroundColor: colors.surfaceAlt }]}
+                        >
+                          <Feather name="x" size={18} color={colors.textSecondary} />
+                        </Pressable>
+                        <Pressable 
+                          onPress={() => {
+                            const newName = editingName.trim();
+                            if (!newName) { Alert.alert('Invalid name', 'Name cannot be empty.'); return; }
 
-                        // check for existing person with same name
-                        const existing = ledger.data.persons.find(p => p.name.toLowerCase() === newName.toLowerCase());
-                        if (existing && existing.id !== selected.person.id) {
-                          Alert.alert('Combine contact?', `Combine records with ${existing.name}?`, [
-                            { text: 'Cancel', style: 'cancel' },
-                            { text: 'Combine', onPress: async () => {
-                                await ledger.mergePersons(existing.id, selected.person.id);
-                                setShowRecordsModal(false);
-                                setSelected(null);
-                              }
+                            // check for existing person with same name
+                            const existing = ledger.data.persons.find(p => p.name.toLowerCase() === newName.toLowerCase());
+                            if (existing && existing.id !== selected.person.id) {
+                              Alert.alert('Combine contact?', `Combine records with ${existing.name}?`, [
+                                { text: 'Cancel', style: 'cancel' },
+                                { text: 'Combine', onPress: async () => {
+                                    await ledger.mergePersons(existing.id, selected.person.id);
+                                    setShowRecordsModal(false);
+                                    setSelected(null);
+                                  }
+                                }
+                              ]);
+                            } else {
+                              ledger.updatePersonName(selected.person.id, newName).then(() => {
+                                setIsEditingName(false);
+                              });
                             }
-                          ]);
-                        } else {
-                          ledger.updatePersonName(selected.person.id, newName).then(() => {
-                            setIsEditingName(false);
-                          });
-                        }
-                      }} style={{ alignItems: 'center', justifyContent: 'center' }}>
-                        <Feather name="check" size={20} color={colors.primary} />
-                      </Pressable>
+                          }} 
+                          style={[styles.actionButton, { backgroundColor: colors.primary }]}
+                        >
+                          <Feather name="check" size={18} color="#FFF" />
+                        </Pressable>
+                      </View>
                     ) : (
-                      <Pressable onPress={() => { setIsEditingName(true); setEditingName(selected.person.name); }} style={{ alignItems: 'center', justifyContent: 'center' }}>
-                        <Feather name="edit-3" size={20} color={colors.textPrimary} />
-                      </Pressable>
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        <Pressable 
+                          onPress={() => handleDeletePerson(selected.person.id, selected.person.name)} 
+                          style={[styles.actionButton, { backgroundColor: colors.negative + '15' }]}
+                        >
+                          <Feather name="trash-2" size={18} color={colors.negative} />
+                        </Pressable>
+                        <Pressable 
+                          onPress={() => { setIsEditingName(true); setEditingName(selected.person.name); }} 
+                          style={[styles.actionButton, { backgroundColor: colors.surfaceAlt }]}
+                        >
+                          <Feather name="edit-3" size={18} color={colors.primary} />
+                        </Pressable>
+                      </View>
                     )
                   ) : null}
                 </View>
@@ -309,6 +355,34 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+    marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  editNameContainer: {
+    backgroundColor: colors.surface,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: colors.border,
+    minWidth: 180,
+  },
+  editNameInput: {
+    color: colors.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    paddingVertical: 6,
   },
   modalScroll: {
     flex: 1,
