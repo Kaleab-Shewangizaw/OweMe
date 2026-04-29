@@ -2,6 +2,7 @@ export type TransactionType = 'lent' | 'borrowed';
 export type TransactionStatus = 'active' | 'settled';
 
 export type TransactionCategory = 'food' | 'shopping' | 'travel' | 'rent' | 'other';
+export type TransactionPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 
 export interface User {
@@ -25,6 +26,7 @@ export interface Transaction {
   amount: number;
   date: string;
   dueDate?: string;
+  priority?: TransactionPriority;
   note?: string;
   status: TransactionStatus;
   createdAt: string;
@@ -54,6 +56,7 @@ export interface TransactionInput {
   amount: number;
   date: string;
   dueDate?: string;
+  priority?: TransactionPriority;
   note?: string;
 }
 
@@ -65,6 +68,7 @@ export interface TransactionUpdate {
   amount?: number;
   date?: string;
   dueDate?: string;
+  priority?: TransactionPriority;
   note?: string;
   status?: TransactionStatus;
 }

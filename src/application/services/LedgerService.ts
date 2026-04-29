@@ -50,6 +50,7 @@ export class LedgerService {
       personId: person.id,
       amount: Number(input.amount),
       date: input.date,
+      priority: (input as any).priority ?? undefined,
       dueDate: input.dueDate || undefined,
       note: input.note?.trim() || undefined,
       status: 'active',
@@ -93,6 +94,7 @@ export class LedgerService {
         type: update.type ?? item.type,
         category: update.category ?? item.category,
         personId: nextPersonId,
+        priority: (update as any).priority ?? item.priority,
         amount: update.amount ?? item.amount,
         date: update.date ?? item.date,
         dueDate: update.dueDate === '' ? undefined : (update.dueDate ?? item.dueDate),
@@ -260,5 +262,52 @@ export class LedgerService {
 
     data.persons = [person, ...data.persons];
     return person;
+  }
+
+  async updatePersonName(personId: string, newName: string): Promise<LedgerData> {
+    const data = await this.repository.getLedgerData();
+    const normalized = newName.trim();
+    const now = new Date().toISOString();
+
+    const nextPersons = data.persons.map((p) => {
+      if (p.id !== personId) return p;
+      return { ...p, name: normalized, updatedAt: now };
+    });
+
+    const nextData: LedgerData = {
+      ...data,
+      persons: nextPersons,
+    };
+
+    await this.repository.saveLedgerData(nextData);
+    return nextData;
+  }
+
+  async mergePersons(targetPersonId: string, sourcePersonId: string): Promise<LedgerData> {
+    if (targetPersonId === sourcePersonId) {
+      return this.repository.getLedgerData();
+    }
+
+    const data = await this.repository.getLedgerData();
+
+    // Reassign transactions from source to target
+    const nextTransactions = data.transactions.map((t) => {
+      if (t.personId === sourcePersonId) {
+        return { ...t, personId: targetPersonId, updatedAt: new Date().toISOString() };
+      }
+      return t;
+    });
+
+    // Remove the source person
+    const nextPersons = data.persons.filter((p) => p.id !== sourcePersonId);
+
+    const nextData: LedgerData = {
+      ...data,
+      transactions: nextTransactions,
+      persons: nextPersons,
+    };
+
+    await this.repository.saveLedgerData(nextData);
+    return nextData;
   }
 }

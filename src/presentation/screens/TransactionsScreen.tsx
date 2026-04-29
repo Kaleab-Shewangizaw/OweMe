@@ -147,6 +147,7 @@ export const TransactionsScreen = ({ ledger, initialMode = 'history' }: Transact
               submitLabel={editing ? 'Save Changes' : 'Record Transaction'}
               initialValue={editing ?? undefined}
               initialPersonName={editing ? ledger.getPersonById(editing.personId)?.name : ''}
+              people={ledger.data.persons.map(p => p.name)}
               onCancel={() => { setEditing(null); setMode('history'); }}
             />
           </SectionCard>

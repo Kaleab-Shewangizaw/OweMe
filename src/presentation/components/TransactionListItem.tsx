@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Person, Transaction } from '../../domain/models/entities';
 import { colors } from '../theme/colors';
+import { priorityColors } from '../theme/priorityColors';
 import { CategoryIcon } from './CategoryIcon';
 
 type TransactionListItemProps = {
@@ -35,8 +36,26 @@ export const TransactionListItem = ({
           <Text style={styles.name}>{person?.name ?? 'Unknown'}</Text>
           <Text style={styles.date}>{transaction.date}</Text>
         </View>
+        {transaction.priority ? (
+          <View style={{
+            backgroundColor: priorityColors[transaction.priority]?.bg,
+            borderRadius: 8,
+            paddingHorizontal: 8,
+            paddingVertical: 2,
+            marginRight: 8,
+            alignSelf: 'flex-start',
+          }}>
+            <Text style={{
+              color: priorityColors[transaction.priority]?.text,
+              fontWeight: '900',
+              fontSize: 11,
+              textTransform: 'uppercase',
+              letterSpacing: 1,
+            }}>{transaction.priority}</Text>
+          </View>
+        ) : null}
         <View style={styles.amountInfo}>
-          <Text style={[styles.amount, { color: isLent ? colors.positive : colors.negative }]}>
+          <Text style={[styles.amount, { color: isLent ? colors.positive : colors.negative }]}> 
             {isLent ? '+' : '-'}{formatCurrency(transaction.amount)}
           </Text>
           <Text style={[styles.status, active ? styles.activeStatus : styles.settledStatus]}>

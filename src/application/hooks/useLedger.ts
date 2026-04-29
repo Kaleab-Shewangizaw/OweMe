@@ -73,6 +73,16 @@ export const useLedger = () => {
     setData(updated);
   }, []);
 
+  const updatePersonName = useCallback(async (personId: string, newName: string) => {
+    const updated = await service.updatePersonName(personId, newName);
+    setData(updated);
+  }, []);
+
+  const mergePersons = useCallback(async (targetPersonId: string, sourcePersonId: string) => {
+    const updated = await service.mergePersons(targetPersonId, sourcePersonId);
+    setData(updated);
+  }, []);
+
   const dashboard = useMemo(() => service.getDashboardSummary(data), [data]);
   const personSummaries = useMemo(() => service.getPersonSummaries(data), [data]);
   const insights = useMemo<InsightSummary>(() => service.getInsights(data), [data]);
@@ -102,6 +112,8 @@ export const useLedger = () => {
     updatePreferences,
     getTransactionsByPerson,
     getPersonById,
+    updatePersonName,
+    mergePersons,
   };
 };
 

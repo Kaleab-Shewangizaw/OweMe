@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
-import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View, Modal, Pressable } from 'react-native';
+import { useMemo, useState, useEffect } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, TextInput, View, Modal, Pressable } from 'react-native';
 
 import { LedgerViewModel } from '../../application/hooks/useLedger';
 import { PersonSummary } from '../../domain/models/entities';
@@ -17,6 +17,8 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
   const [selected, setSelected] = useState<PersonSummary | null>(null);
   const [search, setSearch] = useState('');
   const [showRecordsModal, setShowRecordsModal] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editingName, setEditingName] = useState('');
   const [settleModal, setSettleModal] = useState<{ open: boolean, transaction: any, amount: string, error: string }>({ open: false, transaction: null, amount: '', error: '' });
 
   const filteredPeople = useMemo(() => {
@@ -32,6 +34,8 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
     const match = ledger.personSummaries.find((summary) => summary.person.id === personId) ?? null;
     setSelected(match);
     setShowRecordsModal(true);
+    setIsEditingName(false);
+    setEditingName(match?.person.name ?? '');
   };
 
   const handleSettle = (transaction: any) => {
@@ -105,10 +109,53 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
                   <Feather name="chevron-left" size={24} color={colors.textPrimary} />
                 </Pressable>
                 <View style={styles.headerTitleContainer}>
-                  <Text style={styles.modalTitle}>{selected?.person.name}</Text>
+                  {isEditingName ? (
+                    <TextInput
+                      value={editingName}
+                      onChangeText={setEditingName}
+                      placeholder="Contact name"
+                      placeholderTextColor={colors.textMuted}
+                      style={{ color: colors.textPrimary, fontSize: 18, fontWeight: '900' }}
+                    />
+                  ) : (
+                    <Text style={styles.modalTitle}>{selected?.person.name}</Text>
+                  )}
                   <Text style={styles.modalSubtitle}>Contact Activity</Text>
                 </View>
-                <View style={{ width: 44 }} />
+                <View style={{ width: 44 }}>
+                  {selected ? (
+                    isEditingName ? (
+                      <Pressable onPress={() => {
+                        const newName = editingName.trim();
+                        if (!newName) { Alert.alert('Invalid name', 'Name cannot be empty.'); return; }
+
+                        // check for existing person with same name
+                        const existing = ledger.data.persons.find(p => p.name.toLowerCase() === newName.toLowerCase());
+                        if (existing && existing.id !== selected.person.id) {
+                          Alert.alert('Combine contact?', `Combine records with ${existing.name}?`, [
+                            { text: 'Cancel', style: 'cancel' },
+                            { text: 'Combine', onPress: async () => {
+                                await ledger.mergePersons(existing.id, selected.person.id);
+                                setShowRecordsModal(false);
+                                setSelected(null);
+                              }
+                            }
+                          ]);
+                        } else {
+                          ledger.updatePersonName(selected.person.id, newName).then(() => {
+                            setIsEditingName(false);
+                          });
+                        }
+                      }} style={{ alignItems: 'center', justifyContent: 'center' }}>
+                        <Feather name="check" size={20} color={colors.primary} />
+                      </Pressable>
+                    ) : (
+                      <Pressable onPress={() => { setIsEditingName(true); setEditingName(selected.person.name); }} style={{ alignItems: 'center', justifyContent: 'center' }}>
+                        <Feather name="edit-3" size={20} color={colors.textPrimary} />
+                      </Pressable>
+                    )
+                  ) : null}
+                </View>
               </View>
 
               <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
