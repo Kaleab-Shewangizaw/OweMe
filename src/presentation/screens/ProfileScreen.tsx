@@ -162,10 +162,10 @@ export const ProfileScreen = ({ onBack, ledger }: ProfileScreenProps) => {
           </View>
         </View>
 
-        <Pressable style={styles.logoutBtn}>
+        {/* <Pressable style={styles.logoutBtn}>
           <Feather name="log-out" size={18} color={colors.negative} />
           <Text style={styles.logoutText}>Sign Out</Text>
-        </Pressable>
+        </Pressable> */}
       </ScrollView>
 
       <Modal visible={showPinModal} transparent animationType="fade">
