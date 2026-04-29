@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View, Modal, Pressable } from 'react-native';
 
 import { LedgerViewModel } from '../../application/hooks/useLedger';
 import { PersonSummary } from '../../domain/models/entities';
@@ -16,6 +16,8 @@ type PeopleScreenProps = {
 export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
   const [selected, setSelected] = useState<PersonSummary | null>(null);
   const [search, setSearch] = useState('');
+  const [showRecordsModal, setShowRecordsModal] = useState(false);
+  const [settleModal, setSettleModal] = useState<{ open: boolean, transaction: any, amount: string, error: string }>({ open: false, transaction: null, amount: '', error: '' });
 
   const filteredPeople = useMemo(() => {
     let list = [...ledger.personSummaries];
@@ -29,6 +31,40 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
   const handleSelectPerson = (personId: string) => {
     const match = ledger.personSummaries.find((summary) => summary.person.id === personId) ?? null;
     setSelected(match);
+    setShowRecordsModal(true);
+  };
+
+  const handleSettle = (transaction: any) => {
+    setSettleModal({ open: true, transaction, amount: '', error: '' });
+  };
+
+  const handleSettleAmount = async () => {
+    if (!settleModal.transaction) return;
+    const entered = parseFloat(settleModal.amount);
+    if (isNaN(entered) || entered <= 0) {
+      setSettleModal(m => ({ ...m, error: 'Enter a valid amount.' }));
+      return;
+    }
+    if (entered > settleModal.transaction.amount) {
+      setSettleModal(m => ({ ...m, error: 'Amount exceeds remaining balance.' }));
+      return;
+    }
+    if (entered === settleModal.transaction.amount) {
+      await ledger.markAsSettled(settleModal.transaction.id);
+      setSettleModal({ open: false, transaction: null, amount: '', error: '' });
+      return;
+    }
+    // Partial settlement: reduce amount, add a new transaction for settled part
+    await ledger.updateTransaction(settleModal.transaction.id, { amount: settleModal.transaction.amount - entered });
+    await ledger.addTransaction({
+      type: settleModal.transaction.type,
+      category: settleModal.transaction.category,
+      personName: ledger.getPersonById(settleModal.transaction.personId)?.name || '',
+      amount: entered,
+      date: new Date().toISOString().split('T')[0],
+      note: 'Partial settlement',
+    });
+    setSettleModal({ open: false, transaction: null, amount: '', error: '' });
   };
 
   const selectedTransactions = useMemo(() => {
@@ -61,34 +97,72 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
             </View>
           )}
         </SectionCard>
+        <Modal visible={showRecordsModal} transparent animationType="slide" onRequestClose={() => setShowRecordsModal(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.recordModalContent}>
+              <View style={styles.modalHeader}>
+                <Pressable onPress={() => setShowRecordsModal(false)} style={styles.backButton}>
+                  <Feather name="chevron-left" size={24} color={colors.textPrimary} />
+                </Pressable>
+                <View style={styles.headerTitleContainer}>
+                  <Text style={styles.modalTitle}>{selected?.person.name}</Text>
+                  <Text style={styles.modalSubtitle}>Contact Activity</Text>
+                </View>
+                <View style={{ width: 44 }} />
+              </View>
 
-        {selected ? (
-          <SectionCard
-            title={selected.person.name}
-            subtitle={`Records for this contact`}
-          >
-            {selectedTransactions.length === 0 ? (
-              <View>
-                <Text style={styles.empty}>No entries yet.</Text>
-                <Text style={styles.comingSoon}>Settlement history & analytics coming next version</Text>
+              <ScrollView style={styles.modalScroll} contentContainerStyle={styles.modalScrollContent}>
+                {selectedTransactions.length === 0 ? (
+                  <View style={styles.modalEmptyContainer}>
+                    <Feather name="list" size={48} color={colors.surfaceAlt} style={{ marginBottom: 16 }} />
+                    <Text style={styles.empty}>No entries yet.</Text>
+                    <Text style={styles.comingSoon}>Settlement history & analytics coming soon</Text>
+                  </View>
+                ) : (
+                  <View style={styles.list}>
+                    {selectedTransactions.map((transaction) => (
+                      <TransactionListItem
+                        key={transaction.id}
+                        transaction={transaction}
+                        person={selected?.person}
+                        onEdit={() => undefined}
+                        onDelete={ledger.deleteTransaction}
+                        onSettle={() => handleSettle(transaction)}
+                        showEditAction={false}
+                      />
+                    ))}
+                  </View>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+        <Modal visible={settleModal.open} transparent animationType="fade" onRequestClose={() => setSettleModal({ open: false, transaction: null, amount: '', error: '' })}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+            <View style={{ backgroundColor: colors.background, borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
+              <Text style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, marginBottom: 16 }}>Settle Amount</Text>
+              <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>How much are they settling?</Text>
+              <TextInput
+                value={settleModal.amount}
+                onChangeText={val => setSettleModal(m => ({ ...m, amount: val, error: '' }))}
+                placeholder="Enter amount"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="decimal-pad"
+                style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.textPrimary, marginBottom: 8 }}
+              />
+              <Text style={{ color: colors.textMuted, marginBottom: 8 }}>Remaining: ${settleModal.transaction?.amount?.toFixed(2) ?? ''}</Text>
+              {settleModal.error ? <Text style={{ color: colors.negative, marginBottom: 8 }}>{settleModal.error}</Text> : null}
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                <Pressable onPress={() => setSettleModal({ open: false, transaction: null, amount: '', error: '' })} style={{ paddingVertical: 10, paddingHorizontal: 18 }}>
+                  <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Cancel</Text>
+                </Pressable>
+                <Pressable onPress={handleSettleAmount} style={{ backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18 }}>
+                  <Text style={{ color: '#fff', fontWeight: '700' }}>Settle</Text>
+                </Pressable>
               </View>
-            ) : (
-              <View style={styles.list}>
-                {selectedTransactions.map((transaction) => (
-                  <TransactionListItem
-                    key={transaction.id}
-                    transaction={transaction}
-                    person={selected.person}
-                    onEdit={() => undefined}
-                    onDelete={ledger.deleteTransaction}
-                    onSettle={ledger.markAsSettled}
-                    showEditAction={false}
-                  />
-                ))}
-              </View>
-            )}
-          </SectionCard>
-        ) : null}
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </View>
   );
@@ -138,6 +212,70 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 4,
     fontWeight: '700',
+  },
+
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    justifyContent: 'flex-end',
+  },
+  recordModalContent: {
+    backgroundColor: colors.background,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    height: '90%',
+    paddingTop: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderBottomWidth: 0,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+    marginBottom: 8,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitleContainer: {
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: colors.textPrimary,
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    color: colors.textSecondary,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  modalScroll: {
+    flex: 1,
+  },
+  modalScrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 60,
+  },
+  modalEmptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 100,
   },
 });
 

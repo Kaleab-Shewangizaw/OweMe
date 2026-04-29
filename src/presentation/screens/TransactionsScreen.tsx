@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View, Modal } from 'react-native';
 
 import { LedgerViewModel } from '../../application/hooks/useLedger';
 import { Transaction, TransactionInput, TransactionUpdate } from '../../domain/models/entities';
@@ -25,6 +25,7 @@ export const TransactionsScreen = ({ ledger, initialMode = 'history' }: Transact
   const [search, setSearch] = useState('');
   const [sortField, setSortField] = useState<SortField>('date');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
+  const [settleModal, setSettleModal] = useState<{ open: boolean, transaction: Transaction | null, amount: string, error: string }>({ open: false, transaction: null, amount: '', error: '' });
 
   const onCreate = async (input: TransactionInput | TransactionUpdate) => {
     await ledger.addTransaction(input as TransactionInput);
@@ -65,6 +66,39 @@ export const TransactionsScreen = ({ ledger, initialMode = 'history' }: Transact
       return sortOrder === 'desc' ? -comparison : comparison;
     });
   }, [ledger, search, sortField, sortOrder]);
+
+  const handleSettle = (transaction: Transaction) => {
+    setSettleModal({ open: true, transaction, amount: '', error: '' });
+  };
+
+  const handleSettleAmount = async () => {
+    if (!settleModal.transaction) return;
+    const entered = parseFloat(settleModal.amount);
+    if (isNaN(entered) || entered <= 0) {
+      setSettleModal(m => ({ ...m, error: 'Enter a valid amount.' }));
+      return;
+    }
+    if (entered > settleModal.transaction.amount) {
+      setSettleModal(m => ({ ...m, error: 'Amount exceeds remaining balance.' }));
+      return;
+    }
+    if (entered === settleModal.transaction.amount) {
+      await ledger.markAsSettled(settleModal.transaction.id);
+      setSettleModal({ open: false, transaction: null, amount: '', error: '' });
+      return;
+    }
+    // Partial settlement: reduce amount, add a new transaction for settled part
+    await ledger.updateTransaction(settleModal.transaction.id, { amount: settleModal.transaction.amount - entered });
+    await ledger.addTransaction({
+      type: settleModal.transaction.type,
+      category: settleModal.transaction.category,
+      personName: ledger.getPersonById(settleModal.transaction.personId)?.name || '',
+      amount: entered,
+      date: new Date().toISOString().split('T')[0],
+      note: 'Partial settlement',
+    });
+    setSettleModal({ open: false, transaction: null, amount: '', error: '' });
+  };
 
   const handleDelete = (id: string) => {
     Alert.alert('Delete Record?', 'This will permanently remove this entry.', [
@@ -159,9 +193,35 @@ export const TransactionsScreen = ({ ledger, initialMode = 'history' }: Transact
                       person={ledger.getPersonById(transaction.personId)}
                       onEdit={(t) => { setEditing(t); setMode('add'); }}
                       onDelete={handleDelete}
-                      onSettle={ledger.markAsSettled}
+                      onSettle={() => handleSettle(transaction)}
                     />
                   ))}
+                  <Modal visible={settleModal.open} transparent animationType="fade">
+                    <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+                      <View style={{ backgroundColor: colors.background, borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
+                        <Text style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, marginBottom: 16 }}>Settle Amount</Text>
+                        <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>How much are they settling?</Text>
+                        <TextInput
+                          value={settleModal.amount}
+                          onChangeText={val => setSettleModal(m => ({ ...m, amount: val, error: '' }))}
+                          placeholder="Enter amount"
+                          placeholderTextColor={colors.textMuted}
+                          keyboardType="decimal-pad"
+                          style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.textPrimary, marginBottom: 8 }}
+                        />
+                        <Text style={{ color: colors.textMuted, marginBottom: 8 }}>Remaining: ${settleModal.transaction?.amount.toFixed(2) ?? ''}</Text>
+                        {settleModal.error ? <Text style={{ color: colors.negative, marginBottom: 8 }}>{settleModal.error}</Text> : null}
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+                          <Pressable onPress={() => setSettleModal({ open: false, transaction: null, amount: '', error: '' })} style={{ paddingVertical: 10, paddingHorizontal: 18 }}>
+                            <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Cancel</Text>
+                          </Pressable>
+                          <Pressable onPress={handleSettleAmount} style={{ backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18 }}>
+                            <Text style={{ color: '#fff', fontWeight: '700' }}>Settle</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    </View>
+                  </Modal>
                 </View>
               )}
             </SectionCard>
