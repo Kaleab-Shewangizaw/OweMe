@@ -1,4 +1,6 @@
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import React, { useState } from 'react';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { LedgerViewModel } from '../../application/hooks/useLedger';
 import { SectionCard } from '../components/SectionCard';
@@ -10,8 +12,41 @@ type InsightsScreenProps = {
 
 export const InsightsScreen = ({ ledger }: InsightsScreenProps) => {
   const { frequentBorrowers, upcomingDueTransactions, overdueTransactions } = ledger.insights;
+  const [settleModal, setSettleModal] = useState<{ open: boolean, transaction: any, amount: string, error: string }>({ open: false, transaction: null, amount: '', error: '' });
 
   const maxBorrowCount = Math.max(...frequentBorrowers.map(b => b.transactionCount), 1);
+
+  const handleSettle = (transaction: any) => {
+    setSettleModal({ open: true, transaction, amount: '', error: '' });
+  };
+
+  const handleSettleAmount = async () => {
+    if (!settleModal.transaction) return;
+    const entered = parseFloat(settleModal.amount);
+    if (isNaN(entered) || entered <= 0) {
+      setSettleModal(m => ({ ...m, error: 'Enter a valid amount.' }));
+      return;
+    }
+    if (entered > settleModal.transaction.amount) {
+      setSettleModal(m => ({ ...m, error: 'Amount exceeds remaining balance.' }));
+      return;
+    }
+    if (entered === settleModal.transaction.amount) {
+      await ledger.markAsSettled(settleModal.transaction.id);
+      setSettleModal({ open: false, transaction: null, amount: '', error: '' });
+      return;
+    }
+    await ledger.updateTransaction(settleModal.transaction.id, { amount: settleModal.transaction.amount - entered });
+    await ledger.addTransaction({
+      type: settleModal.transaction.type,
+      category: settleModal.transaction.category,
+      personName: ledger.getPersonById(settleModal.transaction.personId)?.name || '',
+      amount: entered,
+      date: new Date().toISOString().split('T')[0],
+      note: 'Partial settlement',
+    });
+    setSettleModal({ open: false, transaction: null, amount: '', error: '' });
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -47,13 +82,17 @@ export const InsightsScreen = ({ ledger }: InsightsScreenProps) => {
         ) : (
           <View style={styles.list}>
             {upcomingDueTransactions.map((transaction) => (
-              <View key={transaction.id} style={styles.itemRow}>
+              <Pressable 
+                key={transaction.id} 
+                style={({ pressed }) => [styles.itemRow, pressed && { backgroundColor: colors.surfaceAlt }]}
+                onPress={() => handleSettle(transaction)}
+              >
                 <View style={styles.dot} />
                 <Text style={styles.rowText}>
                   {ledger.getPersonById(transaction.personId)?.name} - ${transaction.amount.toFixed(2)}
                 </Text>
                 <Text style={styles.dateText}>{transaction.dueDate}</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         )}
@@ -65,17 +104,48 @@ export const InsightsScreen = ({ ledger }: InsightsScreenProps) => {
         ) : (
           <View style={styles.list}>
             {overdueTransactions.map((transaction) => (
-              <View key={transaction.id} style={[styles.itemRow, styles.overdueRow]}>
+              <Pressable 
+                key={transaction.id} 
+                style={({ pressed }) => [styles.itemRow, styles.overdueRow, pressed && { backgroundColor: colors.surfaceAlt }]}
+                onPress={() => handleSettle(transaction)}
+              >
                 <View style={[styles.dot, { backgroundColor: colors.negative }]} />
                 <Text style={[styles.rowText, { color: colors.negative }]}>
                   {ledger.getPersonById(transaction.personId)?.name} - ${transaction.amount.toFixed(2)}
                 </Text>
                 <Text style={styles.dateText}>Expired</Text>
-              </View>
+              </Pressable>
             ))}
           </View>
         )}
       </SectionCard>
+
+      <Modal visible={settleModal.open} transparent animationType="fade" onRequestClose={() => setSettleModal({ open: false, transaction: null, amount: '', error: '' })}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <View style={{ backgroundColor: colors.background, borderRadius: 20, padding: 24, width: '100%', maxWidth: 340 }}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: colors.textPrimary, marginBottom: 16 }}>Settle Amount</Text>
+            <Text style={{ color: colors.textSecondary, marginBottom: 8 }}>How much are they settling?</Text>
+            <TextInput
+              value={settleModal.amount}
+              onChangeText={val => setSettleModal(m => ({ ...m, amount: val, error: '' }))}
+              placeholder="Enter amount"
+              placeholderTextColor={colors.textMuted}
+              keyboardType="decimal-pad"
+              style={{ borderWidth: 1, borderColor: colors.border, borderRadius: 10, padding: 12, color: colors.textPrimary, marginBottom: 8 }}
+            />
+            <Text style={{ color: colors.textMuted, marginBottom: 8 }}>Remaining: ${settleModal.transaction?.amount?.toFixed(2) ?? ''}</Text>
+            {settleModal.error ? <Text style={{ color: colors.negative, marginBottom: 8 }}>{settleModal.error}</Text> : null}
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 12 }}>
+              <Pressable onPress={() => setSettleModal({ open: false, transaction: null, amount: '', error: '' })} style={{ paddingVertical: 10, paddingHorizontal: 18 }}>
+                <Text style={{ color: colors.textSecondary, fontWeight: '700' }}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={handleSettleAmount} style={{ backgroundColor: colors.primary, borderRadius: 8, paddingVertical: 10, paddingHorizontal: 18 }}>
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Settle</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };

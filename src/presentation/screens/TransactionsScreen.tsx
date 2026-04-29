@@ -15,7 +15,7 @@ type TransactionsScreenProps = {
 };
 
 type ViewMode = 'history' | 'add';
-type SortField = 'date' | 'amount' | 'person';
+type SortField = 'date' | 'amount' | 'person' | 'priority' | 'category';
 type SortOrder = 'asc' | 'desc';
 
 export const TransactionsScreen = ({ ledger, initialMode = 'history' }: TransactionsScreenProps) => {
@@ -62,6 +62,11 @@ export const TransactionsScreen = ({ ledger, initialMode = 'history' }: Transact
         const nameA = ledger.getPersonById(a.personId)?.name || '';
         const nameB = ledger.getPersonById(b.personId)?.name || '';
         comparison = nameA.localeCompare(nameB);
+      } else if (sortField === 'priority') {
+        const priorities = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1, undefined: 0 };
+        comparison = (priorities[a.priority as keyof typeof priorities] || 0) - (priorities[b.priority as keyof typeof priorities] || 0);
+      } else if (sortField === 'category') {
+        comparison = (a.category || '').localeCompare(b.category || '');
       }
       return sortOrder === 'desc' ? -comparison : comparison;
     });
@@ -180,6 +185,14 @@ export const TransactionsScreen = ({ ledger, initialMode = 'history' }: Transact
                 <Text style={[styles.sortButtonText, sortField === 'person' && styles.activeSortText]}>Contact</Text>
                 {sortField === 'person' && <Feather name={sortOrder === 'asc' ? "chevron-up" : "chevron-down"} size={12} color={colors.primary} />}
               </Pressable>
+              <Pressable onPress={() => toggleSort('priority')} style={[styles.sortButton, sortField === 'priority' && styles.activeSort]}>
+                <Text style={[styles.sortButtonText, sortField === 'priority' && styles.activeSortText]}>Priority</Text>
+                {sortField === 'priority' && <Feather name={sortOrder === 'asc' ? "chevron-up" : "chevron-down"} size={12} color={colors.primary} />}
+              </Pressable>
+              <Pressable onPress={() => toggleSort('category')} style={[styles.sortButton, sortField === 'category' && styles.activeSort]}>
+                <Text style={[styles.sortButtonText, sortField === 'category' && styles.activeSortText]}>Type</Text>
+                {sortField === 'category' && <Feather name={sortOrder === 'asc' ? "chevron-up" : "chevron-down"} size={12} color={colors.primary} />}
+              </Pressable>
             </View>
 
             <SectionCard title="Recent Activity" subtitle={`${filteredTransactions.length} results found`}>
@@ -288,6 +301,7 @@ const styles = StyleSheet.create({
   },
   sortBar: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     marginBottom: 20,
     gap: 8,

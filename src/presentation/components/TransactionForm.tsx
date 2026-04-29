@@ -44,12 +44,12 @@ export const TransactionForm = ({
   const [submitting, setSubmitting] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showDueDatePicker, setShowDueDatePicker] = useState(false);
-  
+
   // Separate states for the picker to avoid Date object rollover bugs
   const [tYear, setTYear] = useState(new Date(date).getFullYear());
   const [tMonth, setTMonth] = useState(new Date(date).getMonth() + 1);
   const [tDay, setTDay] = useState(new Date(date).getDate());
-  
+
   const [tdYear, setTdYear] = useState(dueDate ? new Date(dueDate).getFullYear() : new Date().getFullYear());
   const [tdMonth, setTdMonth] = useState(dueDate ? new Date(dueDate).getMonth() + 1 : new Date().getMonth() + 1);
   const [tdDay, setTdDay] = useState(dueDate ? new Date(dueDate).getDate() : new Date().getDate());
@@ -88,7 +88,7 @@ export const TransactionForm = ({
 
     const q = personName.trim().toLowerCase();
     const matches = people.filter((p) => p.toLowerCase().includes(q));
-    
+
     // Sort matches: startsWith first, then includes
     const sorted = [...matches].sort((a, b) => {
       const aStarts = a.toLowerCase().startsWith(q);
@@ -163,8 +163,8 @@ export const TransactionForm = ({
         ))}
       </View>
 
-      <View style={[styles.inputGroup, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
-        <View style={{ flex: 1 }}>
+      <View style={[styles.inputGroup, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' }]}>
+        <View style={{}}>
           <Text style={styles.label}>Category</Text>
           <View style={styles.categoryRow}>
             {getCategoryOptions().map((cat) => (
@@ -193,7 +193,7 @@ export const TransactionForm = ({
               >
                 <Text style={[styles.priorityText, {
                   color: priority === p ? priorityColors[p].text : colors.textSecondary,
-                  fontWeight: '800',
+                  fontWeight: '300',
                 }]}>{p[0].toUpperCase()}</Text>
               </Pressable>
             ))}
@@ -218,13 +218,13 @@ export const TransactionForm = ({
           {suggestionsVisible && filteredPeople.length > 0 ? (
             <View style={styles.suggestionsAbsolute}>
               {filteredPeople.map((s) => (
-                <Pressable 
-                  key={s} 
-                  onPress={() => { 
-                    setPersonName(s); 
-                    setSuggestionsVisible(false); 
-                    Keyboard.dismiss(); 
-                  }} 
+                <Pressable
+                  key={s}
+                  onPress={() => {
+                    setPersonName(s);
+                    setSuggestionsVisible(false);
+                    Keyboard.dismiss();
+                  }}
                   style={({ pressed }) => [
                     styles.suggestionItem,
                     pressed && { backgroundColor: colors.surfaceAlt }
@@ -253,12 +253,12 @@ export const TransactionForm = ({
         </View>
         <View style={[styles.inputGroup, { flex: 1 }]}>
           <Text style={styles.label}>Date</Text>
-          <Pressable style={styles.input} onPress={() => { 
+          <Pressable style={styles.input} onPress={() => {
             const d = new Date(date);
             setTYear(d.getFullYear());
             setTMonth(d.getMonth() + 1);
             setTDay(d.getDate());
-            setShowDatePicker(true); 
+            setShowDatePicker(true);
           }}>
             <Text style={{ color: colors.textPrimary }}>{date}</Text>
           </Pressable>
@@ -267,12 +267,12 @@ export const TransactionForm = ({
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Due Date (optional)</Text>
-        <Pressable style={styles.input} onPress={() => { 
+        <Pressable style={styles.input} onPress={() => {
           const d = new Date(dueDate || date);
           setTdYear(d.getFullYear());
           setTdMonth(d.getMonth() + 1);
           setTdDay(d.getDate());
-          setShowDueDatePicker(true); 
+          setShowDueDatePicker(true);
         }}>
           <Text style={{ color: colors.textPrimary }}>{dueDate || 'Select due date'}</Text>
         </Pressable>
@@ -292,7 +292,7 @@ export const TransactionForm = ({
 
       <Modal visible={showDatePicker} transparent animationType="slide">
         <View style={styles.pickerOverlay}>
-          <View style={[styles.pickerCard, styles.pickerCardModal]}> 
+          <View style={[styles.pickerCard, styles.pickerCardModal]}>
             <View style={styles.dragIndicator} />
             <Text style={[styles.label, { textAlign: 'center', fontSize: 16, marginBottom: 8 }]}>Pick Date</Text>
             <Text style={{ color: colors.textMuted, textAlign: 'center', fontSize: 12, marginBottom: 4 }}>
@@ -332,11 +332,11 @@ export const TransactionForm = ({
             </View>
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 18, justifyContent: 'center' }}>
               <Pressable onPress={() => setShowDatePicker(false)} style={styles.cancelBtn}><Text style={{ color: colors.textSecondary }}>Cancel</Text></Pressable>
-              <Pressable onPress={() => { 
+              <Pressable onPress={() => {
                 const m = tMonth < 10 ? `0${tMonth}` : tMonth;
                 const d = tDay < 10 ? `0${tDay}` : tDay;
-                setDate(`${tYear}-${m}-${d}`); 
-                setShowDatePicker(false); 
+                setDate(`${tYear}-${m}-${d}`);
+                setShowDatePicker(false);
               }} style={styles.submitBtn}><Text style={styles.submitBtnText}>Set</Text></Pressable>
             </View>
           </View>
@@ -345,7 +345,7 @@ export const TransactionForm = ({
 
       <Modal visible={showDueDatePicker} transparent animationType="slide">
         <View style={styles.pickerOverlay}>
-          <View style={[styles.pickerCard, styles.pickerCardModal]}> 
+          <View style={[styles.pickerCard, styles.pickerCardModal]}>
             <View style={styles.dragIndicator} />
             <Text style={[styles.label, { textAlign: 'center', fontSize: 16, marginBottom: 8 }]}>Pick Due Date</Text>
             <Text style={{ color: colors.textMuted, textAlign: 'center', fontSize: 12, marginBottom: 4 }}>
@@ -385,11 +385,11 @@ export const TransactionForm = ({
             </View>
             <View style={{ flexDirection: 'row', gap: 12, marginTop: 18, justifyContent: 'center' }}>
               <Pressable onPress={() => setShowDueDatePicker(false)} style={styles.cancelBtn}><Text style={{ color: colors.textSecondary }}>Cancel</Text></Pressable>
-              <Pressable onPress={() => { 
+              <Pressable onPress={() => {
                 const m = tdMonth < 10 ? `0${tdMonth}` : tdMonth;
                 const d = tdDay < 10 ? `0${tdDay}` : tdDay;
-                setDueDate(`${tdYear}-${m}-${d}`); 
-                setShowDueDatePicker(false); 
+                setDueDate(`${tdYear}-${m}-${d}`);
+                setShowDueDatePicker(false);
               }} style={styles.submitBtn}><Text style={styles.submitBtnText}>Set</Text></Pressable>
             </View>
           </View>
@@ -458,19 +458,19 @@ const styles = StyleSheet.create({
   },
   priorityRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginTop: 6,
-    justifyContent: 'flex-end',
+    gap: 10,
+    marginTop: 4,
   },
   priorityItem: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
+    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   priorityActive: {
     backgroundColor: colors.primary,
