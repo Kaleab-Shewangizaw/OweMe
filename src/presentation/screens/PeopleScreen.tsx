@@ -14,11 +14,12 @@ type PeopleScreenProps = {
 };
 
 export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
-  const [selected, setSelected] = useState<PersonSummary | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [showRecordsModal, setShowRecordsModal] = useState(false);
   const [isEditingName, setIsEditingName] = useState(false);
   const [editingName, setEditingName] = useState('');
+  const [updateFeedback, setUpdateFeedback] = useState<string | null>(null);
   const [settleModal, setSettleModal] = useState<{ open: boolean, transaction: any, amount: string, error: string }>({ open: false, transaction: null, amount: '', error: '' });
 
   const filteredPeople = useMemo(() => {
@@ -31,11 +32,12 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
   }, [ledger.personSummaries, search]);
 
   const handleSelectPerson = (personId: string) => {
-    const match = ledger.personSummaries.find((summary) => summary.person.id === personId) ?? null;
-    setSelected(match);
+    const match = ledger.personSummaries.find((summary) => summary.person.id === personId);
+    setSelectedId(personId);
     setShowRecordsModal(true);
     setIsEditingName(false);
     setEditingName(match?.person.name ?? '');
+    setUpdateFeedback(null);
   };
 
   const handleSettle = (transaction: any) => {
@@ -90,10 +92,15 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
     );
   };
 
+  const selectedSummary = useMemo(() => {
+    if (!selectedId) return null;
+    return ledger.personSummaries.find(p => p.person.id === selectedId) ?? null;
+  }, [ledger.personSummaries, selectedId]);
+
   const selectedTransactions = useMemo(() => {
-    if (!selected) return [];
-    return ledger.getTransactionsByPerson(selected.person.id);
-  }, [ledger, selected]);
+    if (!selectedId) return [];
+    return ledger.getTransactionsByPerson(selectedId);
+  }, [ledger, selectedId]);
 
   return (
     <View style={styles.container}>
@@ -120,7 +127,7 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
             </View>
           )}
         </SectionCard>
-        <Modal visible={showRecordsModal} transparent animationType="slide" onRequestClose={() => setShowRecordsModal(false)}>
+        <Modal visible={showRecordsModal} transparent animationType="slide" onRequestClose={() => { setShowRecordsModal(false); setSelectedId(null); }}>
           <View style={styles.modalOverlay}>
             <View style={styles.recordModalContent}>
               <View style={styles.modalHeader}>
@@ -141,13 +148,17 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
                     </View>
                   ) : (
                     <>
-                      <Text style={styles.modalTitle}>{selected?.person.name}</Text>
-                      <Text style={styles.modalSubtitle}>Contact Activity</Text>
+                      <Text style={styles.modalTitle}>{selectedSummary?.person.name}</Text>
+                      {updateFeedback ? (
+                        <Text style={[styles.modalSubtitle, { color: colors.primary }]}>{updateFeedback}</Text>
+                      ) : (
+                        <Text style={styles.modalSubtitle}>Contact Activity</Text>
+                      )}
                     </>
                   )}
                 </View>
                 <View style={styles.headerActions}>
-                  {selected ? (
+                  {selectedSummary ? (
                     isEditingName ? (
                       <View style={{ flexDirection: 'row', gap: 8 }}>
                         <Pressable 
@@ -163,19 +174,21 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
 
                             // check for existing person with same name
                             const existing = ledger.data.persons.find(p => p.name.toLowerCase() === newName.toLowerCase());
-                            if (existing && existing.id !== selected.person.id) {
+                            if (existing && existing.id !== selectedSummary.person.id) {
                               Alert.alert('Combine contact?', `Combine records with ${existing.name}?`, [
                                 { text: 'Cancel', style: 'cancel' },
                                 { text: 'Combine', onPress: async () => {
-                                    await ledger.mergePersons(existing.id, selected.person.id);
+                                    await ledger.mergePersons(existing.id, selectedSummary.person.id);
                                     setShowRecordsModal(false);
-                                    setSelected(null);
+                                    setSelectedId(null);
                                   }
                                 }
                               ]);
                             } else {
-                              ledger.updatePersonName(selected.person.id, newName).then(() => {
+                              ledger.updatePersonName(selectedSummary.person.id, newName).then(() => {
                                 setIsEditingName(false);
+                                setUpdateFeedback('Name updated!');
+                                setTimeout(() => setUpdateFeedback(null), 3000);
                               });
                             }
                           }} 
@@ -187,13 +200,13 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
                     ) : (
                       <View style={{ flexDirection: 'row', gap: 8 }}>
                         <Pressable 
-                          onPress={() => handleDeletePerson(selected.person.id, selected.person.name)} 
+                          onPress={() => handleDeletePerson(selectedSummary.person.id, selectedSummary.person.name)} 
                           style={[styles.actionButton, { backgroundColor: colors.negative + '15' }]}
                         >
                           <Feather name="trash-2" size={18} color={colors.negative} />
                         </Pressable>
                         <Pressable 
-                          onPress={() => { setIsEditingName(true); setEditingName(selected.person.name); }} 
+                          onPress={() => { setIsEditingName(true); setEditingName(selectedSummary.person.name); }} 
                           style={[styles.actionButton, { backgroundColor: colors.surfaceAlt }]}
                         >
                           <Feather name="edit-3" size={18} color={colors.primary} />
@@ -217,7 +230,7 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
                       <TransactionListItem
                         key={transaction.id}
                         transaction={transaction}
-                        person={selected?.person}
+                        person={selectedSummary?.person}
                         onEdit={() => undefined}
                         onDelete={ledger.deleteTransaction}
                         onSettle={() => handleSettle(transaction)}
