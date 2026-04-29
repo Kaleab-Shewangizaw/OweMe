@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useState, useEffect } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import * as LocalAuthentication from 'expo-local-authentication';
 
 import { useLedger } from './src/application/hooks/useLedger';
@@ -120,11 +120,11 @@ export default function App() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="light" />
-      
+
       <View style={styles.header}>
         <View style={styles.logoRow}>
           <View style={styles.logoCircle}>
-            <Feather name="layers" size={18} color={colors.primary} />
+            <Image source={require('./assets/icon.png')} style={styles.logoImage} />
           </View>
           <Text style={styles.appName}>OweMe</Text>
         </View>
@@ -146,10 +146,10 @@ export default function App() {
             <Text style={styles.metaText}>Syncing Ledger...</Text>
           </View>
         ) : null}
-        
+
         {ledger.error ? (
           <View style={styles.center}>
-             <Text style={styles.errorText}>{ledger.error}</Text>
+            <Text style={styles.errorText}>{ledger.error}</Text>
           </View>
         ) : null}
 
@@ -168,10 +168,10 @@ export default function App() {
               style={styles.tabItem}
             >
               <View style={[styles.tabIconContainer, isActive ? styles.tabIconActive : null]}>
-                <Feather 
-                  name={tab.icon as any} 
-                  size={22} 
-                  color={isActive ? colors.background : colors.textMuted} 
+                <Feather
+                  name={tab.icon as any}
+                  size={22}
+                  color={isActive ? colors.background : colors.textMuted}
                 />
               </View>
               <Text style={[styles.tabLabel, isActive ? styles.tabLabelActive : null]}>
@@ -223,14 +223,17 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   logoCircle: {
-    width: 40,
-    height: 40,
+
     borderRadius: 14,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
+
+  },
+  logoImage: {
+    width: 45,
+    height: 45,
+    borderRadius: 16,
   },
   appName: {
 
