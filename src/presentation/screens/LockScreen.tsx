@@ -58,7 +58,7 @@ export const LockScreen = ({ mode, storedPin, onSuccess }: LockScreenProps) => {
   };
 
   const getTitle = () => {
-    if (mode === 'unlock') return 'Secure Access';
+    if (mode === 'unlock') return '';
     return confirmPin ? 'Confirm PIN' : 'Create PIN';
   };
 
@@ -90,22 +90,32 @@ export const LockScreen = ({ mode, storedPin, onSuccess }: LockScreenProps) => {
         ))}
       </Animated.View>
 
-      <View style={styles.numpad}>
-        {['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'delete'].map((item, i) => {
-          if (item === '') return <View key={i} style={styles.numBtnEmpty} />;
-          if (item === 'delete') {
-            return (
-              <Pressable key={i} style={styles.numBtn} onPress={handleDelete}>
-                <Feather name="delete" size={24} color={colors.textSecondary} />
-              </Pressable>
-            );
-          }
-          return (
-            <Pressable key={i} style={styles.numBtn} onPress={() => handlePress(item)}>
-              <Text style={styles.numText}>{item}</Text>
-            </Pressable>
-          );
-        })}
+      <View style={styles.numpadGrid}>
+        {/* 3 columns x 4 rows: 1 2 3, 4 5 6, 7 8 9, (empty) 0 (delete) */}
+        {[
+          ['1', '2', '3'],
+          ['4', '5', '6'],
+          ['7', '8', '9'],
+          [null, '0', 'delete']
+        ].map((row, rowIdx) => (
+          <View key={rowIdx} style={styles.numpadRow}>
+            {row.map((item, colIdx) => {
+              if (item === null) return <View key={colIdx} style={styles.numBtnEmpty} />;
+              if (item === 'delete') {
+                return (
+                  <Pressable key={colIdx} style={styles.numBtn} onPress={handleDelete}>
+                    <Feather name="delete" size={24} color={colors.textSecondary} />
+                  </Pressable>
+                );
+              }
+              return (
+                <Pressable key={colIdx} style={styles.numBtn} onPress={() => handlePress(item)}>
+                  <Text style={styles.numText}>{item}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ))}
       </View>
 
       <View style={[styles.forgotBtn, { opacity: 0.5 }]}>
@@ -158,12 +168,15 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: colors.border,
   },
-  numpad: {
+  numpadGrid: {
+    alignSelf: 'center',
+    width: 260,
+    marginTop: 32,
+  },
+  numpadRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    paddingHorizontal: 40,
-    gap: 20,
+    justifyContent: 'space-between',
+    marginBottom: 20,
   },
   numBtn: {
     width: 72,

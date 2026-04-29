@@ -190,7 +190,7 @@ export const ProfileScreen = ({ onBack, ledger }: ProfileScreenProps) => {
               <PinNumpadRow items={['1', '2', '3']} />
               <PinNumpadRow items={['4', '5', '6']} />
               <PinNumpadRow items={['7', '8', '9']} />
-              <PinNumpadRow items={[null, '0', 'delete']} />
+              <PinNumpadRow items={['delete', '0', null]} />
             </View>
             <Pressable style={styles.pinCancelBtn} onPress={() => {
               setShowPinModal(false);
@@ -233,6 +233,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    marginTop: 32,
   },
   header: {
     flexDirection: 'row',

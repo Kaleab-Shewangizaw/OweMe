@@ -207,6 +207,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: colors.background,
+    paddingTop: 32,
   },
   header: {
     flexDirection: 'row',
@@ -309,6 +310,16 @@ const styles = StyleSheet.create({
   },
   tabIconActive: {
     backgroundColor: colors.primary,
+    borderRadius: 999,
+    width: 56,
+    height: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 2,
+    shadowColor: colors.primary,
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 4,
   },
   tabLabel: {
     display: 'none', // Hide labels for a cleaner minimal look, icon-only focus

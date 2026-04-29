@@ -81,20 +81,36 @@ export const DashboardScreen = ({ ledger, onAction }: DashboardScreenProps) => {
       <View style={styles.section}>
         <Text style={styles.sectionHeader}>Quick Actions</Text>
         <View style={styles.actionsGrid}>
-          {[
-            { icon: 'plus', label: 'Lend', color: colors.primary },
-            { icon: 'minus', label: 'Borrow', color: colors.accent },
-            { icon: 'users', label: 'Split', color: colors.catShop },
-            { icon: 'repeat', label: 'Settle', color: colors.positive },
-          ].map((action, i) => (
-            <Pressable key={i} style={styles.actionItem} onPress={() => onAction(action.label as any)}>
-              <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
-                <Feather name={action.icon as any} size={22} color={action.color} />
-              </View>
-              <Text style={styles.actionLabel}>{action.label}</Text>
-            </Pressable>
-          ))}
+  {[
+    { icon: 'plus', label: 'Lend', color: colors.primary },
+    { icon: 'minus', label: 'Borrow', color: colors.accent },
+    { icon: 'users', label: 'Split', color: colors.catShop },
+    { icon: 'repeat', label: 'Settle', color: colors.positive },
+  ].map((action, i) => {
+    const isDisabled = action.label === 'Split';
+
+    return (
+      <Pressable
+        key={i}
+        style={[
+          styles.actionItem,
+          isDisabled && { opacity: 0.4 } // optional visual feedback
+        ]}
+        disabled={isDisabled}
+        onPress={() => {
+          if (!isDisabled) {
+            onAction(action.label as any);
+          }
+        }}
+      >
+        <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
+          <Feather name={action.icon as any} size={22} color={action.color} />
         </View>
+        <Text style={styles.actionLabel}>{action.label}</Text>
+      </Pressable>
+    );
+  })}
+</View>
       </View>
 
       {/* Immersive Chart Section */}
