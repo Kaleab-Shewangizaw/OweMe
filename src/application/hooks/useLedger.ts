@@ -68,6 +68,11 @@ export const useLedger = () => {
     setData(updated);
   }, []);
 
+  const settleTransaction = useCallback(async (id: string, settledAmount: number) => {
+    const updated = await service.settleTransaction(id, settledAmount);
+    setData(updated);
+  }, []);
+
   const updatePreferences = useCallback(async (update: Partial<UserPreferences>) => {
     const updated = await service.updatePreferences(update);
     setData(updated);
@@ -114,6 +119,7 @@ export const useLedger = () => {
     updateTransaction,
     deleteTransaction,
     markAsSettled,
+    settleTransaction,
     updatePreferences,
     getTransactionsByPerson,
     getPersonById,

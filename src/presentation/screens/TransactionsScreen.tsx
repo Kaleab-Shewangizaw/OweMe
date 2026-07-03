@@ -87,21 +87,7 @@ export const TransactionsScreen = ({ ledger, initialMode = 'history' }: Transact
       setSettleModal(m => ({ ...m, error: 'Amount exceeds remaining balance.' }));
       return;
     }
-    if (entered === settleModal.transaction.amount) {
-      await ledger.markAsSettled(settleModal.transaction.id);
-      setSettleModal({ open: false, transaction: null, amount: '', error: '' });
-      return;
-    }
-    // Partial settlement: reduce amount, add a new transaction for settled part
-    await ledger.updateTransaction(settleModal.transaction.id, { amount: settleModal.transaction.amount - entered });
-    await ledger.addTransaction({
-      type: settleModal.transaction.type,
-      category: settleModal.transaction.category,
-      personName: ledger.getPersonById(settleModal.transaction.personId)?.name || '',
-      amount: entered,
-      date: new Date().toISOString().split('T')[0],
-      note: 'Partial settlement',
-    });
+    await ledger.settleTransaction(settleModal.transaction.id, entered);
     setSettleModal({ open: false, transaction: null, amount: '', error: '' });
   };
 

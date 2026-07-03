@@ -129,6 +129,66 @@ export class LedgerService {
     return this.updateTransaction(id, { status: 'settled' });
   }
 
+  /**
+   * Settles a transaction, fully or partially.
+   * Partial settlements shrink the remaining balance on the original transaction
+   * and record the settled portion as a `settled` history entry so it is never
+   * double-counted as an outstanding active balance.
+   */
+  async settleTransaction(id: string, settledAmount: number): Promise<LedgerData> {
+    const data = await this.repository.getLedgerData();
+    const transaction = data.transactions.find((item) => item.id === id);
+
+    if (!transaction) {
+      return data;
+    }
+
+    if (!Number.isFinite(settledAmount) || settledAmount <= 0) {
+      throw new Error('Settled amount must be greater than zero.');
+    }
+
+    if (settledAmount > transaction.amount) {
+      throw new Error('Settled amount exceeds remaining balance.');
+    }
+
+    const now = new Date().toISOString();
+
+    if (settledAmount === transaction.amount) {
+      const nextTransactions = data.transactions.map((item) =>
+        item.id === id ? { ...item, status: 'settled' as const, updatedAt: now } : item
+      );
+      const nextData: LedgerData = { ...data, transactions: nextTransactions };
+      await this.repository.saveLedgerData(nextData);
+      return nextData;
+    }
+
+    const settledEntry: Transaction = {
+      id: createId(),
+      type: transaction.type,
+      category: transaction.category,
+      personId: transaction.personId,
+      amount: settledAmount,
+      date: now.split('T')[0],
+      priority: transaction.priority,
+      note: 'Partial settlement',
+      status: 'settled',
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const nextTransactions = data.transactions.map((item) =>
+      item.id === id ? { ...item, amount: item.amount - settledAmount, updatedAt: now } : item
+    );
+
+    const nextData: LedgerData = {
+      ...data,
+      transactions: [settledEntry, ...nextTransactions],
+    };
+
+    await this.repository.saveLedgerData(nextData);
+    return nextData;
+  }
+
   getDashboardSummary(data: LedgerData): DashboardSummary {
     const historicalBalance: { date: string; balance: number }[] = [];
     let runningBalance = 0;
