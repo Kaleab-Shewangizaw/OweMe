@@ -16,7 +16,7 @@ export const NotificationsScreen = ({ onBack }: NotificationsScreenProps) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={onBack} style={styles.backBtn}>
-          <Feather name="chevron-left" size={24} color={colors.textPrimary} />
+          <Feather name="chevron-left" size={20} color={colors.textPrimary} />
         </Pressable>
         <Text style={styles.headerTitle}>Notifications</Text>
         <View style={[styles.clearBtn, { opacity: 0.5 }]}>
@@ -27,14 +27,14 @@ export const NotificationsScreen = ({ onBack }: NotificationsScreenProps) => {
       <ScrollView contentContainerStyle={styles.content}>
         {notifications.length === 0 ? (
           <View style={styles.empty}>
-            <Feather name="bell-off" size={48} color={colors.border} />
+            <Feather name="bell-off" size={36} color={colors.border} />
             <Text style={styles.emptyText}>No notifications yet</Text>
           </View>
         ) : (
           notifications.map((notif) => (
             <View key={notif.id} style={styles.notifRow}>
               <View style={[styles.iconBox, { backgroundColor: notif.color + '15' }]}>
-                <Feather name={notif.icon as any} size={20} color={notif.color} />
+                <Feather name={notif.icon as any} size={16} color={notif.color} />
               </View>
               <View style={styles.info}>
                 <View style={styles.row}>
@@ -60,52 +60,52 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 14,
   },
   backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     color: colors.textPrimary,
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '900',
   },
   clearBtn: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
   },
   clearText: {
     color: colors.primary,
     fontWeight: '800',
-    fontSize: 13,
+    fontSize: 11,
   },
   content: {
-    paddingHorizontal: 20,
-    paddingBottom: 60,
+    paddingHorizontal: 16,
+    paddingBottom: 40,
   },
   notifRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    paddingVertical: 18,
+    gap: 12,
+    paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   info: {
     flex: 1,
-    gap: 4,
+    gap: 3,
   },
   row: {
     flexDirection: 'row',
@@ -114,32 +114,32 @@ const styles = StyleSheet.create({
   },
   notifTitle: {
     color: colors.textPrimary,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
   },
   notifTime: {
     color: colors.textMuted,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
   },
   notifMessage: {
     color: colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 12,
+    lineHeight: 16,
   },
   empty: {
-    paddingTop: 100,
+    paddingTop: 70,
     alignItems: 'center',
-    gap: 16,
+    gap: 10,
   },
   emptyText: {
     color: colors.textMuted,
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   comingSoon: {
     color: colors.warning,
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
   },
 });
