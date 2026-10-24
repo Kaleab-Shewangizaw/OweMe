@@ -6,11 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#040507"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.kal-x.oweme"
@@ -29,6 +24,17 @@
       "eas": {
         "projectId": "1d9b8e36-c9b6-463e-91c4-3d2cf51ac750"
       }
-    }
+    },
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#040507",
+          "imageWidth": 200
+        }
+      ]
+    ]
   }
 }

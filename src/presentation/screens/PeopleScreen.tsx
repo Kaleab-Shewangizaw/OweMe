@@ -71,7 +71,7 @@ export const PeopleScreen = ({ ledger }: PeopleScreenProps) => {
           onPress: async () => {
             await ledger.deletePerson(personId);
             setShowRecordsModal(false);
-            setSelected(null);
+            setSelectedId(null);
           } 
         },
       ]
